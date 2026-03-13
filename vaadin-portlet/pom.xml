@@ -1,37 +1,42 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
-        <groupId>com.vaadin</groupId>
-        <artifactId>vaadin-portlet-parent</artifactId>
-        <version>2.1-SNAPSHOT</version>
+        <groupId>org.vaadin.componentfactory</groupId>
+        <artifactId>vaadin-liferay-portlet-parent</artifactId>
+        <version>24.9.13-SNAPSHOT</version>
     </parent>
-    <artifactId>vaadin-portlet</artifactId>
-    <name>Vaadin Portlet</name>
+
+    <artifactId>vaadin-liferay-portlet-bridge</artifactId>
+    <name>Vaadin Liferay Portlet Bridge</name>
     <packaging>jar</packaging>
 
-    <properties>
-        <jakarta.validation.version>3.0.0</jakarta.validation.version>
-    </properties>
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>com.vaadin</groupId>
+                <artifactId>vaadin-bom</artifactId>
+                <type>pom</type>
+                <scope>import</scope>
+                <version>${vaadin.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
     <dependencies>
         <dependency>
             <groupId>com.vaadin</groupId>
             <artifactId>flow-server</artifactId>
-            <version>${flow.version}</version>
         </dependency>
         <dependency>
             <groupId>com.vaadin</groupId>
             <artifactId>flow-client</artifactId>
-            <version>${flow.version}</version>
         </dependency>
-
         <dependency>
             <groupId>com.vaadin</groupId>
             <artifactId>license-checker</artifactId>
-            <version>3.0.1</version>
             <scope>compile</scope>
         </dependency>
 
@@ -39,7 +44,7 @@
         <dependency>
             <groupId>com.liferay.portal</groupId>
             <artifactId>com.liferay.portal.kernel</artifactId>
-            <version>178.0.1</version>
+            <version>${liferay.kernel.version}</version>
             <scope>provided</scope>
         </dependency>
 
@@ -65,7 +70,6 @@
         <dependency>
             <groupId>com.vaadin</groupId>
             <artifactId>flow-html-components</artifactId>
-            <version>${flow.version}</version>
             <scope>test</scope>
         </dependency>
 
