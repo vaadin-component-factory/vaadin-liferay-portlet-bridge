@@ -27,4 +27,4 @@ jobs:
           cache: maven
 
       - name: maven verify
-        run: mvn -B -ntp verify
+        run: mvn -B -ntp -Dvaadin.commercialWithBanner verify
