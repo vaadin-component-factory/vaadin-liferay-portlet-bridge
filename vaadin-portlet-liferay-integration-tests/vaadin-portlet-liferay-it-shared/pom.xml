@@ -53,22 +53,22 @@
 
         <!-- Portlet API -->
         <dependency>
-            <groupId>javax.portlet</groupId>
-            <artifactId>portlet-api</artifactId>
+            <groupId>com.liferay.jakarta.portlet</groupId>
+            <artifactId>com.liferay.jakarta.portlet-api</artifactId>
             <scope>provided</scope>
         </dependency>
 
         <!-- Servlet API -->
         <dependency>
-            <groupId>javax.servlet</groupId>
-            <artifactId>javax.servlet-api</artifactId>
+            <groupId>jakarta.servlet</groupId>
+            <artifactId>jakarta.servlet-api</artifactId>
             <scope>provided</scope>
         </dependency>
 
         <dependency>
             <groupId>com.liferay.portal</groupId>
-            <artifactId>release.portal.api</artifactId>
-            <version>${liferay.version}</version>
+            <artifactId>com.liferay.portal.kernel</artifactId>
+            <version>${liferay.kernel.version}</version>
             <scope>provided</scope>
         </dependency>
 

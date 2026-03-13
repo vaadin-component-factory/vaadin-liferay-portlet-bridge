@@ -46,12 +46,12 @@
     </scm>
 
     <properties>
-        <maven.compiler.source>11</maven.compiler.source>
-        <maven.compiler.target>11</maven.compiler.target>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <jsinterop.version>1.0.1</jsinterop.version>
-        <sonar.java.source>11</sonar.java.source>
+        <sonar.java.source>17</sonar.java.source>
         <sonar.analysis.mode>preview</sonar.analysis.mode>
         <sonar.issuesReport.console.enable>true
         </sonar.issuesReport.console.enable>
@@ -73,11 +73,11 @@
         <maven.resources.plugin.version>3.0.2</maven.resources.plugin.version>
         <maven.clean.plugin.version>3.0.0</maven.clean.plugin.version>
 
-        <testbench.version>8.3.0</testbench.version>
-        <vaadin.version>23.6-SNAPSHOT</vaadin.version>
-        <flow.version>23.6-SNAPSHOT</flow.version>
-        <flow.cdi.version>14.0-SNAPSHOT</flow.cdi.version>
-        <jetty.version>10.0.9</jetty.version>
+        <testbench.version>9.3.2</testbench.version>
+        <vaadin.version>24.9.10</vaadin.version>
+        <flow.version>24.9.10</flow.version>
+        <flow.cdi.version>15.2.1</flow.cdi.version>
+        <jetty.version>12.0.16</jetty.version>
         <webdrivermanager.version>5.2.3</webdrivermanager.version>
 
         <maven.test.skip>false</maven.test.skip>
@@ -85,25 +85,45 @@
 
     <repositories>
         <repository>
-            <id>vaadin-prereleases</id>
-            <url>https://maven.vaadin.com/vaadin-prereleases/</url>
             <snapshots>
-                <enabled>true</enabled>
+                <enabled>false</enabled>
             </snapshots>
+            <id>central</id>
+            <url>https://repo.maven.apache.org/maven2</url>
         </repository>
         <repository>
-            <id>vaadin-addons</id>
-            <url>https://maven.vaadin.com/vaadin-addons/</url>
-        </repository>
-    </repositories>
-
-    <pluginRepositories>
-        <pluginRepository>
-            <id>vaadin-prereleases</id>
-            <url>https://maven.vaadin.com/vaadin-prereleases/</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
             <snapshots>
                 <enabled>true</enabled>
             </snapshots>
+            <id>vaadin-prereleases</id>
+            <url>https://maven.vaadin.com/vaadin-prereleases</url>
+        </repository>
+        <repository>
+            <id>liferay-public</id>
+            <name>Liferay Public</name>
+            <url>https://repository.liferay.com/nexus/content/repositories/public/</url>
+        </repository>
+    </repositories>
+    <pluginRepositories>
+        <pluginRepository>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+            <id>central</id>
+            <url>https://repo.maven.apache.org/maven2</url>
+        </pluginRepository>
+        <pluginRepository>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+            <id>vaadin-prereleases</id>
+            <url>https://maven.vaadin.com/vaadin-prereleases</url>
         </pluginRepository>
     </pluginRepositories>
 
@@ -111,8 +131,8 @@
         <dependencies>
             <dependency>
                 <groupId>org.mockito</groupId>
-                <artifactId>mockito-all</artifactId>
-                <version>1.10.19</version>
+                <artifactId>mockito-core</artifactId>
+                <version>5.11.0</version>
                 <scope>test</scope>
             </dependency>
             <dependency>
@@ -352,9 +372,9 @@
                     <artifactId>japicmp-maven-plugin</artifactId>
                     <dependencies>
                         <dependency>
-                            <groupId>javax.activation</groupId>
-                            <artifactId>javax.activation-api</artifactId>
-                            <version>1.2.0</version>
+                            <groupId>jakarta.activation</groupId>
+                            <artifactId>jakarta.activation-api</artifactId>
+                            <version>2.1.3</version>
                         </dependency>
                     </dependencies>
                 </plugin>

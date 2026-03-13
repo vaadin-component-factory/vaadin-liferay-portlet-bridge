@@ -13,7 +13,7 @@
     <packaging>jar</packaging>
 
     <properties>
-        <javax.validation.version>2.0.0.Final</javax.validation.version>
+        <jakarta.validation.version>3.0.0</jakarta.validation.version>
     </properties>
 
     <dependencies>
@@ -31,7 +31,7 @@
         <dependency>
             <groupId>com.vaadin</groupId>
             <artifactId>license-checker</artifactId>
-            <version>1.13.6</version>
+            <version>3.0.1</version>
             <scope>compile</scope>
         </dependency>
 
@@ -39,27 +39,27 @@
         <dependency>
             <groupId>com.liferay.portal</groupId>
             <artifactId>com.liferay.portal.kernel</artifactId>
-            <version>9.30.0</version>
+            <version>178.0.1</version>
             <scope>provided</scope>
         </dependency>
 
         <!--Portlet API -->
         <dependency>
-            <groupId>javax.portlet</groupId>
-            <artifactId>portlet-api</artifactId>
-            <version>3.0.0</version>
+            <groupId>com.liferay.jakarta.portlet</groupId>
+            <artifactId>com.liferay.jakarta.portlet-api</artifactId>
+            <version>4.0.0</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>javax.servlet</groupId>
-            <artifactId>javax.servlet-api</artifactId>
-            <version>3.1.0</version>
+            <groupId>jakarta.servlet</groupId>
+            <artifactId>jakarta.servlet-api</artifactId>
+            <version>6.0.0</version>
             <scope>provided</scope>
         </dependency>
 
         <dependency>
             <groupId>org.mockito</groupId>
-            <artifactId>mockito-all</artifactId>
+            <artifactId>mockito-core</artifactId>
         </dependency>
 
         <dependency>
@@ -109,6 +109,18 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>${maven.surefire.plugin.version}</version>
+                <configuration>
+                    <argLine>
+                        -Dnet.bytebuddy.experimental=true
+                        --add-opens java.base/java.lang=ALL-UNNAMED
+                        --add-opens java.base/java.lang.reflect=ALL-UNNAMED
+                    </argLine>
+                </configuration>
             </plugin>
         </plugins>
     </build>

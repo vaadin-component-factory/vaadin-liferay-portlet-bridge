@@ -8,11 +8,11 @@
  */
 package com.vaadin.flow.portal;
 
-import javax.portlet.PortletContext;
-import javax.portlet.PortletResponse;
-import javax.portlet.RenderRequest;
-import javax.portlet.RenderResponse;
-import javax.portlet.ResourceURL;
+import jakarta.portlet.PortletContext;
+import jakarta.portlet.PortletResponse;
+import jakarta.portlet.RenderRequest;
+import jakarta.portlet.RenderResponse;
+import jakarta.portlet.ResourceURL;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -25,6 +25,7 @@ import com.vaadin.flow.server.VaadinRequest;
 import com.vaadin.flow.server.VaadinResponse;
 import com.vaadin.flow.server.VaadinSession;
 import com.vaadin.flow.server.communication.WebComponentProvider;
+import com.vaadin.pro.licensechecker.BuildType;
 import com.vaadin.pro.licensechecker.LicenseChecker;
 
 /**
@@ -86,7 +87,7 @@ class PortletBootstrapHandler extends SynchronizedRequestHandler {
                 // There is also a license check when the UI is going to be
                 // instantiated. That will throw a server side exception.
                  LicenseChecker.checkLicense(VaadinPortletService.PROJECT_NAME,
-                 VaadinPortletService.getPortletVersion());
+                 VaadinPortletService.getPortletVersion(), BuildType.DEVELOPMENT);
             }
 
             String registrationInstruction = String
