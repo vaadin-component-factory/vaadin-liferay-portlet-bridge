@@ -27,4 +27,5 @@ jobs:
           cache: maven
 
       - name: maven verify
+        working-directory: vaadin-portlet
         run: mvn -B -ntp -Dvaadin.commercialWithBanner verify
