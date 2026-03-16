@@ -9,7 +9,7 @@
         <version>24.9.13-SNAPSHOT</version>
     </parent>
 
-    <artifactId>vaadin-portlet-cdi</artifactId>
+    <artifactId>vaadin-liferay-portlet-bridge-cdi</artifactId>
     <name>Vaadin CDI Portlet</name>
     <packaging>jar</packaging>
 

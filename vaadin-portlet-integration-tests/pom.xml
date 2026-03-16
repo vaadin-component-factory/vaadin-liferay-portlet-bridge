@@ -59,7 +59,7 @@
 
             <dependency>
                 <groupId>${project.groupId}</groupId>
-                <artifactId>vaadin-portlet-cdi</artifactId>
+                <artifactId>vaadin-liferay-portlet-bridge-cdi</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
