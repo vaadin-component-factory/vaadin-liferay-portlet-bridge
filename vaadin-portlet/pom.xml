@@ -6,9 +6,9 @@
 
     <groupId>org.vaadin.componentfactory</groupId>
     <artifactId>vaadin-liferay-portlet-bridge</artifactId>
-    <version>3.0.0-SNAPSHOT</version>
+    <version>3.0.0-beta1</version>
 
-    <name>Vaadin Liferay Portlet Bridge</name>
+    <name>Liferay Portlet Bridge for Vaadin</name>
     <packaging>jar</packaging>
 
     <organization>
