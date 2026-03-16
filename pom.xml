@@ -8,7 +8,7 @@
     <artifactId>vaadin-liferay-portlet-parent</artifactId>
     <name>Vaadin Liferay Portlet support</name>
     <packaging>pom</packaging>
-    <version>24.9.13-SNAPSHOT</version>
+    <version>3.0.0-SNAPSHOT</version>
 
     <modules>
         <module>vaadin-portlet</module>

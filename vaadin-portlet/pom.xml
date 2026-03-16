@@ -6,7 +6,7 @@
     <parent>
         <groupId>org.vaadin.componentfactory</groupId>
         <artifactId>vaadin-liferay-portlet-parent</artifactId>
-        <version>24.9.13-SNAPSHOT</version>
+        <version>3.0.0-SNAPSHOT</version>
     </parent>
 
     <artifactId>vaadin-liferay-portlet-bridge</artifactId>
