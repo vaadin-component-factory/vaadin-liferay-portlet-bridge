@@ -221,11 +221,14 @@
                     <version>3.0.2</version>
                     <configuration>
                         <archive>
+                            <index>true</index>
                             <manifest>
+                                <addClasspath>false</addClasspath>
                                 <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
                             </manifest>
                             <manifestEntries>
                                 <CvdlName>vaadin-liferay-portlet-bridge</CvdlName>
+                                <Vaadin-Package-Version>1</Vaadin-Package-Version>
                             </manifestEntries>
                         </archive>
                     </configuration>
