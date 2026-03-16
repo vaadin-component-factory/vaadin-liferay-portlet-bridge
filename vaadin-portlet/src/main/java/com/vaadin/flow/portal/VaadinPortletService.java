@@ -8,6 +8,23 @@
  */
 package com.vaadin.flow.portal;
 
+/*-
+ * #%L
+ * Vaadin Liferay Portlet Bridge
+ * %%
+ * Copyright (C) 2026 Vaadin Ltd
+ * %%
+ * This program is available under Commercial Vaadin Add-On License 3.0
+ * (CVALv3).
+ * 
+ * See the file license.html distributed with this software for more
+ * information about licensing.
+ * 
+ * You should have received a copy of the CVALv3 along with this program.
+ * If not, see <http://vaadin.com/license/cval-3>.
+ * #L%
+ */
+
 import jakarta.portlet.EventRequest;
 import jakarta.portlet.PortletContext;
 import jakarta.portlet.PortletRequest;
@@ -53,7 +70,7 @@ import com.vaadin.flow.shared.Registration;
  * @since
  */
 public class VaadinPortletService extends VaadinService {
-    static final String PROJECT_NAME = "vaadin-portlet";
+    static final String PROJECT_NAME = "vaadin-liferay-portlet-bridge";
 
     private static final String VERSION_PROPERTIES_NAME = "version.properties";
     private static final String PORTLET_VERSION_PROPERTY = "portlet.version";

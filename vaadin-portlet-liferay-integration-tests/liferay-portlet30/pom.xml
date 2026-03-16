@@ -2,26 +2,25 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <parent>
-        <artifactId>vaadin-portlet-liferay-integration-tests</artifactId>
-        <groupId>com.vaadin</groupId>
-        <version>2.1-SNAPSHOT</version>
-    </parent>
     <modelVersion>4.0.0</modelVersion>
-    <packaging>war</packaging>
+    <parent>
+        <groupId>org.vaadin.componentfactory</groupId>
+        <artifactId>vaadin-portlet-liferay-integration-tests</artifactId>
+        <version>3.0.0-SNAPSHOT</version>
+    </parent>
 
     <artifactId>liferay-portlet30</artifactId>
     <name>Liferay Portlet 3.0 feature tests</name>
+    <packaging>war</packaging>
 
     <dependencies>
-
         <dependency>
-            <groupId>com.vaadin</groupId>
-            <artifactId>vaadin-portlet</artifactId>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>vaadin-liferay-portlet-bridge</artifactId>
         </dependency>
 
         <dependency>
-            <groupId>com.vaadin</groupId>
+            <groupId>${project.groupId}</groupId>
             <artifactId>vaadin-portlet-liferay-it-shared</artifactId>
             <version>${project.version}</version>
             <scope>test</scope>
@@ -35,35 +34,29 @@
         <dependency>
             <groupId>com.vaadin</groupId>
             <artifactId>vaadin-upload-flow</artifactId>
-            <version>${component.version}</version>
         </dependency>
         <dependency>
             <groupId>com.vaadin</groupId>
             <artifactId>vaadin-text-field-flow</artifactId>
-            <version>${component.version}</version>
         </dependency>
         <dependency>
             <groupId>com.vaadin</groupId>
             <artifactId>flow-html-components</artifactId>
-            <version>${flow.version}</version>
         </dependency>
 
         <dependency>
             <groupId>com.vaadin</groupId>
             <artifactId>vaadin-upload-testbench</artifactId>
-            <version>${component.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>com.vaadin</groupId>
             <artifactId>vaadin-button-testbench</artifactId>
-            <version>${component.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>com.vaadin</groupId>
             <artifactId>flow-html-components-testbench</artifactId>
-            <version>${flow.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -97,17 +90,14 @@
         <dependency>
             <groupId>com.vaadin</groupId>
             <artifactId>vaadin-button-flow</artifactId>
-            <version>${component.version}</version>
         </dependency>
         <dependency>
             <groupId>com.vaadin</groupId>
             <artifactId>vaadin-ordered-layout-flow</artifactId>
-            <version>${component.version}</version>
         </dependency>
         <dependency>
             <groupId>com.vaadin</groupId>
             <artifactId>vaadin-notification-flow</artifactId>
-            <version>${component.version}</version>
         </dependency>
 
         <dependency>
@@ -138,6 +128,7 @@
             <plugin>
                 <groupId>com.vaadin</groupId>
                 <artifactId>flow-maven-plugin</artifactId>
+                <version>${flow.version}</version>
                 <executions>
                     <execution>
                         <goals>

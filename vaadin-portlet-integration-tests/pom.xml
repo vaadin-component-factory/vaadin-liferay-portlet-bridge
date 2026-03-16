@@ -4,9 +4,9 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
-        <groupId>com.vaadin</groupId>
-        <artifactId>vaadin-portlet-parent</artifactId>
-        <version>2.1-SNAPSHOT</version>
+        <groupId>org.vaadin.componentfactory</groupId>
+        <artifactId>vaadin-liferay-portlet-parent</artifactId>
+        <version>3.0.0-SNAPSHOT</version>
     </parent>
     <artifactId>vaadin-portlet-integration-tests</artifactId>
     <name>Portlet Integration Tests</name>
@@ -45,30 +45,23 @@
         <dependencies>
             <dependency>
                 <groupId>com.vaadin</groupId>
-                <artifactId>vaadin-portlet</artifactId>
+                <artifactId>vaadin-bom</artifactId>
+                <type>pom</type>
+                <scope>import</scope>
+                <version>${vaadin.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>vaadin-liferay-portlet-bridge</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
             <dependency>
-                <groupId>com.vaadin</groupId>
-                <artifactId>vaadin-portlet-cdi</artifactId>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>vaadin-liferay-portlet-bridge-cdi</artifactId>
                 <version>${project.version}</version>
             </dependency>
-
-            <!-- Test dependency from components -->
-            <dependency>
-                <groupId>com.vaadin</groupId>
-                <artifactId>flow-data</artifactId>
-                <version>${flow.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>com.vaadin</groupId>
-                <artifactId>vaadin-testbench-core</artifactId>
-                <version>${testbench.version}</version>
-                <scope>test</scope>
-            </dependency>
-
 
             <!-- Added to provide logging output as Flow uses -->
             <!-- the unbound SLF4J no-operation (NOP) logger implementation -->
@@ -93,17 +86,6 @@
                 <version>6.0.0</version>
                 <scope>provided</scope>
             </dependency>
-
-            <dependency>
-                <groupId>com.vaadin</groupId>
-                <artifactId>flow-server-production-mode</artifactId>
-                <version>${flow.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.vaadin</groupId>
-                <artifactId>vaadin-lumo-theme</artifactId>
-                <version>${flow.version}</version>
-            </dependency>
         </dependencies>
     </dependencyManagement>
 
@@ -117,7 +99,7 @@
                     <configuration>
                         <container>
                             <containerId>tomcat8x</containerId>
-	                        <home>${pluto.home.directory}</home>
+                            <home>${pluto.home.directory}</home>
                             <timeout>${cargo.timeout}</timeout>
                         </container>
                         <configuration>
@@ -136,7 +118,7 @@
                         <!-- Set an empty deployer so that cargo does not try to add the
                         current project's artifact to the container (as this was already
                         done by maven) -->
-                        <deployer />
+                        <deployer/>
                     </configuration>
                 </plugin>
                 <plugin>
@@ -160,6 +142,9 @@
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-war-plugin</artifactId>
                     <version>3.2.3</version>
+                    <configuration>
+                        <failOnMissingWebXml>false</failOnMissingWebXml>
+                    </configuration>
                     <executions>
                         <execution>
                             <id>portlet-war</id>
@@ -267,6 +252,7 @@
                     <plugin>
                         <groupId>com.vaadin</groupId>
                         <artifactId>flow-maven-plugin</artifactId>
+                        <version>${flow.version}</version>
                         <executions>
                             <execution>
                                 <goals>
@@ -282,36 +268,36 @@
             <id>autosetup</id>
             <build>
                 <pluginManagement>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-antrun-plugin</artifactId>
-                        <executions>
-                            <execution>
-                                <id>download-files</id>
-                                <phase>package</phase>
-                                <goals>
-                                    <goal>run</goal>
-                                </goals>
-                                <configuration>
-                                    <target name="setup-pluto">
-                                        <get src="https://archive.apache.org/dist/portals/pluto/pluto-bundle-${pluto.version}.zip"
-                                             dest="${bundle.download.directory}/pluto.zip"
-                                             verbose="false" skipexisting="true"/>
-                                        <unzip
-                                                src="${bundle.download.directory}/pluto.zip"
-                                                dest="${project.build.directory}"/>
-                                        <copy file="${project.build.directory}/${project.artifactId}.war"
-                                              todir="${pluto.home.directory}/webapps"/>
-                                        <copy file="${project.build.directory}/vaadin-portlet-static.war"
-                                              todir="${pluto.home.directory}/webapps"/>
-                                    </target>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </pluginManagement>
+                    <plugins>
+                        <plugin>
+                            <groupId>org.apache.maven.plugins</groupId>
+                            <artifactId>maven-antrun-plugin</artifactId>
+                            <executions>
+                                <execution>
+                                    <id>download-files</id>
+                                    <phase>package</phase>
+                                    <goals>
+                                        <goal>run</goal>
+                                    </goals>
+                                    <configuration>
+                                        <target name="setup-pluto">
+                                            <get src="https://archive.apache.org/dist/portals/pluto/pluto-bundle-${pluto.version}.zip"
+                                                 dest="${bundle.download.directory}/pluto.zip"
+                                                 verbose="false" skipexisting="true"/>
+                                            <unzip
+                                                    src="${bundle.download.directory}/pluto.zip"
+                                                    dest="${project.build.directory}"/>
+                                            <copy file="${project.build.directory}/${project.artifactId}.war"
+                                                  todir="${pluto.home.directory}/webapps"/>
+                                            <copy file="${project.build.directory}/vaadin-portlet-static.war"
+                                                  todir="${pluto.home.directory}/webapps"/>
+                                        </target>
+                                    </configuration>
+                                </execution>
+                            </executions>
+                        </plugin>
+                    </plugins>
+                </pluginManagement>
             </build>
         </profile>
 
@@ -319,29 +305,29 @@
             <id>autocopy</id>
             <build>
                 <pluginManagement>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-antrun-plugin</artifactId>
-                        <executions>
-                            <execution>
-                                <id>download-files</id>
-                                <phase>package</phase>
-                                <goals>
-                                    <goal>run</goal>
-                                </goals>
-                                <configuration>
-                                    <tasks>
-                                        <copy file="${project.build.directory}/${project.artifactId}.war"
-                                              todir="${pluto.home.directory}/webapps"/>
-                                        <copy file="${project.build.directory}/vaadin-portlet-static.war"
-                                              todir="${pluto.home.directory}/webapps"/>
-                                    </tasks>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
+                    <plugins>
+                        <plugin>
+                            <groupId>org.apache.maven.plugins</groupId>
+                            <artifactId>maven-antrun-plugin</artifactId>
+                            <executions>
+                                <execution>
+                                    <id>download-files</id>
+                                    <phase>package</phase>
+                                    <goals>
+                                        <goal>run</goal>
+                                    </goals>
+                                    <configuration>
+                                        <tasks>
+                                            <copy file="${project.build.directory}/${project.artifactId}.war"
+                                                  todir="${pluto.home.directory}/webapps"/>
+                                            <copy file="${project.build.directory}/vaadin-portlet-static.war"
+                                                  todir="${pluto.home.directory}/webapps"/>
+                                        </tasks>
+                                    </configuration>
+                                </execution>
+                            </executions>
+                        </plugin>
+                    </plugins>
                 </pluginManagement>
             </build>
         </profile>
