@@ -230,7 +230,7 @@
                                 <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
                             </manifest>
                             <manifestEntries>
-                                <CvdlName>vaadin-portlet</CvdlName>
+                                <CvdlName>vaadin-liferay-portlet-bridge</CvdlName>
                             </manifestEntries>
 
                         </archive>
