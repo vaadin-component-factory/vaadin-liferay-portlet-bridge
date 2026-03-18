@@ -156,7 +156,7 @@ public abstract class VaadinPortlet<C extends Component> extends GenericPortlet
      */
     @PreserveOnRefresh
     @Push(PushMode.DISABLED)
-    protected class PortletWebComponentExporter
+    protected static class PortletWebComponentExporter<C extends Component>
             extends WebComponentExporter<C> {
         /**
          * Creates a new exporter instance using a provided {@code tag}.
@@ -183,8 +183,7 @@ public abstract class VaadinPortlet<C extends Component> extends GenericPortlet
         @Override
         protected Class<C> getComponentClass() {
             return (Class<C>) ReflectTools.getGenericInterfaceType(
-                    VaadinPortlet.this.getClass(),
-                    WebComponentExporterFactory.class);
+                    getClass(), WebComponentExporter.class);
         }
 
         protected void initComponent(C component) {
@@ -446,7 +445,14 @@ public abstract class VaadinPortlet<C extends Component> extends GenericPortlet
 
     @Override
     public WebComponentExporter<C> create() {
-        return new PortletWebComponentExporter(getPortletTag());
+        return new PortletWebComponentExporter<C>(getPortletTag()) {
+            @Override
+            protected Class<C> getComponentClass() {
+                return (Class<C>) ReflectTools.getGenericInterfaceType(
+                        VaadinPortlet.this.getClass(),
+                        WebComponentExporterFactory.class);
+            }
+        };
     }
 
     /**

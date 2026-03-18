@@ -61,8 +61,8 @@ public class VaadinPortletTest {
 
     private class TestVaadinPortlet extends VaadinPortlet<TestComponent> {
 
-        private class TestWebComponentExporter
-                extends PortletWebComponentExporter {
+        private static class TestWebComponentExporter
+                extends PortletWebComponentExporter<TestComponent> {
 
             private TestWebComponentExporter(String tag) {
                 super(tag);
