@@ -456,12 +456,12 @@ public abstract class VaadinPortlet<C extends Component> extends GenericPortlet
      *
      * @return the tag of the main component to use
      */
-    protected String getPortletTag() {
-        if (getClass().isAnnotationPresent(Tag.class)) {
-            Tag tag = getClass().getAnnotation(Tag.class);
+    protected static <P extends VaadinPortlet<?>> String getPortletTag(Class<P> type) {
+        if (type.isAnnotationPresent(Tag.class)) {
+            final Tag tag = type.getAnnotation(Tag.class);
             return tag.value();
         } else {
-            String candidate = deriveTagName(getClass().getCanonicalName());
+            String candidate = deriveTagName(type.getCanonicalName());
             while (candidate.chars().anyMatch(Character::isUpperCase)) {
                 candidate = deriveTagName(candidate);
             }
@@ -472,7 +472,18 @@ public abstract class VaadinPortlet<C extends Component> extends GenericPortlet
         }
     }
 
-    private String deriveTagName(String candidate) {
+    /**
+     * Gets the tag for the main component in the portlet.
+     * <p>
+     * By default derives the tag name from the class name.
+     *
+     * @return the tag of the main component to use
+     */
+    protected String getPortletTag() {
+        return getPortletTag(this.getClass());
+    }
+
+    private static String deriveTagName(String candidate) {
         String result = SharedUtil.camelCaseToDashSeparated(candidate)
                 .replaceFirst("^-", "");
         if (!result.contains("-")) {
