@@ -14,14 +14,10 @@ package com.vaadin.flow.server.startup;
  * %%
  * Copyright (C) 2026 Vaadin Ltd
  * %%
- * This program is available under Commercial Vaadin Add-On License 3.0
- * (CVALv3).
+ * This program is available under Vaadin Commercial License and Service Terms.
  * 
- * See the file license.html distributed with this software for more
- * information about licensing.
- * 
- * You should have received a copy of the CVALv3 along with this program.
- * If not, see <http://vaadin.com/license/cval-3>.
+ * See {@literal <https://vaadin.com/commercial-license-and-service-terms>} for the full
+ * license.
  * #L%
  */
 

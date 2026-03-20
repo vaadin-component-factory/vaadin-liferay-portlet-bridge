@@ -20,8 +20,8 @@
 
     <licenses>
         <license>
-            <name>CVALv3</name>
-            <url>https://vaadin.com/license/cval-3</url>
+            <name>Vaadin Commercial License and Service Terms</name>
+            <url>https://vaadin.com/commercial-license-and-service-terms</url>
         </license>
     </licenses>
 
@@ -311,7 +311,7 @@
                     <version>2.4.0</version>
                     <!--  Use `mvn license:update-file-header` to fix header problems -->
                     <configuration>
-                        <licenseName>cval3</licenseName>
+                        <licenseName>vcl</licenseName>
                         <licenseResolver>${project.baseUri}src/license</licenseResolver>
                         <includes>
                             <include>**/main/**/*.java</include>
