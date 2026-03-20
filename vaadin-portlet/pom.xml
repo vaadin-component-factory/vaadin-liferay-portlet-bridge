@@ -6,7 +6,7 @@
 
     <groupId>org.vaadin.componentfactory</groupId>
     <artifactId>vaadin-liferay-portlet-bridge</artifactId>
-    <version>3.0.0-beta1</version>
+    <version>3.0.0-beta4</version>
 
     <name>Liferay Portlet Bridge for Vaadin</name>
     <packaging>jar</packaging>
@@ -109,15 +109,17 @@
         <dependency>
             <groupId>com.vaadin</groupId>
             <artifactId>flow-server</artifactId>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>com.vaadin</groupId>
             <artifactId>flow-client</artifactId>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>com.vaadin</groupId>
             <artifactId>license-checker</artifactId>
-            <scope>compile</scope>
+            <scope>provided</scope>
         </dependency>
 
         <!-- https://mvnrepository.com/artifact/com.liferay.portal/com.liferay.portal.kernel -->
@@ -142,39 +144,38 @@
             <scope>provided</scope>
         </dependency>
 
+        <!-- Test dependencies -->
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
+            <scope>test</scope>
         </dependency>
-
         <dependency>
             <groupId>com.vaadin</groupId>
             <artifactId>flow-html-components</artifactId>
             <scope>test</scope>
         </dependency>
-
         <dependency>
             <groupId>com.vaadin</groupId>
             <artifactId>flow-test-generic</artifactId>
             <version>${flow.version}</version>
             <scope>test</scope>
         </dependency>
-
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
+            <scope>test</scope>
         </dependency>
-
         <dependency>
             <groupId>org.hamcrest</groupId>
             <artifactId>hamcrest-all</artifactId>
+            <scope>test</scope>
         </dependency>
-
         <dependency>
             <groupId>net.jcip</groupId>
             <artifactId>jcip-annotations</artifactId>
+            <scope>test</scope>
         </dependency>
-
     </dependencies>
 
     <build>
@@ -184,7 +185,6 @@
                 <filtering>true</filtering>
             </resource>
         </resources>
-
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -211,8 +211,6 @@
                 <artifactId>license-maven-plugin</artifactId>
             </plugin>
         </plugins>
-
-
         <pluginManagement>
             <plugins>
                 <plugin>
@@ -286,13 +284,6 @@
                         <parallel>all</parallel>
                         <threadCount>2</threadCount>
                     </configuration>
-                    <dependencies>
-                        <dependency>
-                            <groupId>com.sun.xml.bind</groupId>
-                            <artifactId>jaxb-impl</artifactId>
-                            <version>2.3.6</version>
-                        </dependency>
-                    </dependencies>
                 </plugin>
                 <plugin>
                     <groupId>com.github.siom79.japicmp</groupId>
@@ -394,28 +385,13 @@
         </profile>
     </profiles>
 
-
-
-
-
-
     <repositories>
         <repository>
+            <id>central</id>
+            <url>https://repo.maven.apache.org/maven2</url>
             <snapshots>
                 <enabled>false</enabled>
             </snapshots>
-            <id>central</id>
-            <url>https://repo.maven.apache.org/maven2</url>
-        </repository>
-        <repository>
-            <releases>
-                <enabled>true</enabled>
-            </releases>
-            <snapshots>
-                <enabled>true</enabled>
-            </snapshots>
-            <id>vaadin-prereleases</id>
-            <url>https://maven.vaadin.com/vaadin-prereleases</url>
         </repository>
         <repository>
             <id>liferay-public</id>
