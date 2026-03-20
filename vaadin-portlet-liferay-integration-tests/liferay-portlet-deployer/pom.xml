@@ -48,9 +48,8 @@
 
     <dependencies>
         <dependency>
-            <groupId>${project.groupId}</groupId>
+            <groupId>org.vaadin.componentfactory</groupId>
             <artifactId>vaadin-liferay-portlet-bridge</artifactId>
-            <version>${project.version}</version>
         </dependency>
 
         <dependency>
