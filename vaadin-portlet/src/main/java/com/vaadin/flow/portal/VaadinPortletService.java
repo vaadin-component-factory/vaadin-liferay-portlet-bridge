@@ -66,7 +66,7 @@ import com.vaadin.flow.shared.Registration;
  * @since
  */
 public class VaadinPortletService extends VaadinService {
-    static final String PROJECT_NAME = "vaadin-liferay-portlet-bridge";
+    static final String PROJECT_NAME = "vaadin-portlet";
 
     private static final String VERSION_PROPERTIES_NAME = "version.properties";
     private static final String PORTLET_VERSION_PROPERTY = "portlet.version";
