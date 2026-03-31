@@ -14,6 +14,25 @@ if (typeof global === 'undefined') {
 }
 globalThis.Vaadin = globalThis.Vaadin || {};
 globalThis.Vaadin.Flow = globalThis.Vaadin.Flow || {};
+
+// Liferay DXP's portlet hub may add non-writable, non-configurable properties (e.g. toJsonURLText)
+// to Object.prototype. This breaks Polymer/LitElement which assigns to plain {} objects that inherit
+// these read-only properties. Since they are non-configurable, we cannot fix them directly.
+// Instead, we patch Object.getOwnPropertyNames to hide these properties when enumerating
+// Object.prototype, so Polymer's prototype-chain walk does not encounter them.
+(function() {
+    var _origGetOwnPropertyNames = Object.getOwnPropertyNames;
+    Object.getOwnPropertyNames = function(obj) {
+        var names = _origGetOwnPropertyNames.call(Object, obj);
+        if (obj === Object.prototype) {
+            return names.filter(function(n) {
+                var d = Object.getOwnPropertyDescriptor(obj, n);
+                return !d || d.writable !== false || d.configurable !== false;
+            });
+        }
+        return names;
+    };
+})();
 // <liferay>
 // 7.2.1-ga2 should create and populate these for us.
 // Forcing object generation for hub registration later on.
