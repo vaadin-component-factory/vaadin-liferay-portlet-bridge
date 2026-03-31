@@ -76,7 +76,10 @@ if (!globalThis.Vaadin.Flow.Portlets) {
             let params = hub.newParameters();
             Object.getOwnPropertyNames(parameters).forEach(
                 function (prop) {
-                    params[prop] = parameters[prop];
+                    var descriptor = Object.getOwnPropertyDescriptor(params, prop);
+                    if (!descriptor || descriptor.writable !== false) {
+                        params[prop] = parameters[prop];
+                    }
                 });
 
             hub.dispatchClientEvent(event, params);
@@ -260,7 +263,10 @@ if (!globalThis.Vaadin.Flow.Portlets) {
             if (payload) {
                 Object.getOwnPropertyNames(payload).forEach(
                     function (prop) {
-                        params[prop] = payload[prop];
+                        var descriptor = Object.getOwnPropertyDescriptor(params, prop);
+                        if (!descriptor || descriptor.writable !== false) {
+                            params[prop] = payload[prop];
+                        }
                     });
             }
             hub.action(params).then(function () {
