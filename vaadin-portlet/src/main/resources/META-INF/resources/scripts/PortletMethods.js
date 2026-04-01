@@ -193,8 +193,8 @@ if (!globalThis.Vaadin.Flow.Portlets) {
                         let liferayData = globalThis.Vaadin.Flow.Portlets._liferayData;
                         if (liferayData && liferayData[portletRegistryName]) {
                             let portlets = globalThis.portlet.data.pageRenderState.portlets;
-                            if (!portlets[portletRegistryName]) {
-                                // Data was wiped by Liferay, re-inject from backup
+                            if (!portlets[portletRegistryName] || !portlets[portletRegistryName].allowedPM) {
+                                // Data was wiped or incomplete, re-inject from backup
                                 portlets[portletRegistryName] = liferayData[portletRegistryName];
                             }
                         }
