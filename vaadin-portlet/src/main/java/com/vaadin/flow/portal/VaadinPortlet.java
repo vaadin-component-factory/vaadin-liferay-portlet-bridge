@@ -146,6 +146,10 @@ public abstract class VaadinPortlet<C extends Component> extends GenericPortlet
     private static final String WEB_COMPONENT_BOOTSTRAP_HANDLER_URL_SUBKEY = "webComponentBootstrapHandlerURL";
     private static final String WEB_COMPONENT_UIDL_REQUEST_HANDLER_URL_SUBKEY = "webComponentUidlRequestHandlerURL";
 
+    // Quick lookup for PortletViewContext by namespace, used by doDispatch
+    // to update mode/state on @PreserveOnRefresh reloads.
+    private final Map<String, PortletViewContext> activeContexts = new HashMap<>();
+
     /**
      * Portlet component exporter.
      * <p>
@@ -293,6 +297,12 @@ public abstract class VaadinPortlet<C extends Component> extends GenericPortlet
                 return;
             }
 
+            // With @PreserveOnRefresh, the UI and component are reused across
+            // page reloads (e.g. mode switches). configureInstance/initComponent
+            // won't be called again, so update the PortletViewContext here to
+            // reflect the current portlet mode and window state.
+            updateViewContextFromRender(request, response);
+
             // try to let super handle - it'll call methods annotated for
             // handling, the default doXYZ(), or throw if a handler for the
             // mode is not found
@@ -316,6 +326,26 @@ public abstract class VaadinPortlet<C extends Component> extends GenericPortlet
                 // Something else failed, pass on
                 throw e;
             }
+        }
+    }
+
+    /**
+     * Updates the existing PortletViewContext with the current portlet mode
+     * and window state from the render request. This is needed because
+     * {@code @PreserveOnRefresh} reuses the UI/component across page reloads,
+     * so {@code initComponent} may not be called again on mode switches.
+     */
+    private void updateViewContextFromRender(RenderRequest request,
+            RenderResponse response) {
+        try {
+            String namespace = response.getNamespace();
+            PortletViewContext context = activeContexts.get(namespace);
+            if (context != null) {
+                context.updateModeAndState(request.getPortletMode(),
+                        request.getWindowState());
+            }
+        } catch (Exception e) {
+            getLogger().debug("Could not update view context from render", e);
         }
     }
 
@@ -576,6 +606,7 @@ public abstract class VaadinPortlet<C extends Component> extends GenericPortlet
             String windowName, PortletViewContext context) {
         setSessionAttribute(session, namespace,
                 windowName + "-" + VIEW_CONTEXT_SESSION_SUBKEY, context);
+        activeContexts.put(namespace, context);
     }
 
     private <T> void setSessionAttribute(VaadinSession session,
