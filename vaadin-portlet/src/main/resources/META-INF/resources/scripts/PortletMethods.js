@@ -139,6 +139,25 @@ if (!globalThis.Vaadin.Flow.Portlets) {
             }
         } catch (e) { /* pageRenderState not ready yet — doHubRegistration will handle it */ }
         // </liferay>
+
+        // Set up a queueing registerListener early so that Vaadin UIDL
+        // requests (which may arrive before the PortletHub is registered)
+        // can queue event listeners. initListenerRegistration will replace
+        // this with the full version once the hub is ready.
+        globalThis.Vaadin.Flow.Portlets[portletRegistryName] = globalThis.Vaadin.Flow.Portlets[portletRegistryName] || {};
+        var earlyObj = globalThis.Vaadin.Flow.Portlets[portletRegistryName];
+        if (!earlyObj.registerListener) {
+            earlyObj.registerListener = function(eventType, uid) {
+                earlyObj.listeners = earlyObj.listeners || {};
+                earlyObj.listeners[uid] = eventType;
+            };
+            earlyObj.unregisterListener = function(uid) {
+                if (earlyObj.listeners) {
+                    delete earlyObj.listeners[uid];
+                }
+            };
+        }
+
         customElements.whenDefined(tag).then(function () {
             let elem = document.querySelector(tag + "[data-portlet-id='" + portletRegistryName + "']");
             if (!elem) {
