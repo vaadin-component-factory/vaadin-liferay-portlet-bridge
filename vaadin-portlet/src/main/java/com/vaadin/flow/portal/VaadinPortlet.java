@@ -150,6 +150,12 @@ public abstract class VaadinPortlet<C extends Component> extends GenericPortlet
     // to update mode/state on @PreserveOnRefresh reloads.
     private final Map<String, PortletViewContext> activeContexts = new HashMap<>();
 
+    // Mode/state from the render phase. Resource requests in Liferay don't
+    // carry the correct portlet mode, so we capture it during render and
+    // apply it in initComponent (inside the session lock).
+    private final Map<String, PortletMode> pendingRenderModes = new HashMap<>();
+    private final Map<String, WindowState> pendingRenderStates = new HashMap<>();
+
     /**
      * Portlet component exporter.
      * <p>
@@ -302,6 +308,8 @@ public abstract class VaadinPortlet<C extends Component> extends GenericPortlet
             // won't be called again, so update the PortletViewContext here to
             // reflect the current portlet mode and window state.
             updateViewContextFromRender(request, response);
+            getLogger().debug("doDispatch: namespace={}, mode={}, pendingModes={}",
+                    response.getNamespace(), request.getPortletMode(), pendingRenderModes.keySet());
 
             // try to let super handle - it'll call methods annotated for
             // handling, the default doXYZ(), or throw if a handler for the
@@ -339,11 +347,12 @@ public abstract class VaadinPortlet<C extends Component> extends GenericPortlet
             RenderResponse response) {
         try {
             String namespace = response.getNamespace();
-            PortletViewContext context = activeContexts.get(namespace);
-            if (context != null) {
-                context.updateModeAndState(request.getPortletMode(),
-                        request.getWindowState());
-            }
+            // Store the render-phase mode/state so initComponent can apply
+            // it inside the session lock. Resource requests don't carry the
+            // correct portlet mode in Liferay, so this is the only reliable
+            // source of the actual mode.
+            pendingRenderModes.put(namespace, request.getPortletMode());
+            pendingRenderStates.put(namespace, request.getWindowState());
         } catch (Exception e) {
             getLogger().debug("Could not update view context from render", e);
         }
@@ -375,7 +384,22 @@ public abstract class VaadinPortlet<C extends Component> extends GenericPortlet
     @Override
     public void serveResource(ResourceRequest request,
             ResourceResponse response) throws PortletException {
+        getLogger().debug("serveResource: namespace={}, pendingModes={}", response.getNamespace(), pendingRenderModes.keySet());
         handleRequest(request, response);
+    }
+
+    void applyPendingModeAndState(String namespace) {
+        PortletViewContext context = activeContexts.get(namespace);
+        PortletMode mode = pendingRenderModes.get(namespace);
+        getLogger().debug("applyPendingModeAndState: namespace={}, contextFound={}, pendingMode={}",
+                namespace, context != null, mode);
+        if (context != null) {
+            mode = pendingRenderModes.remove(namespace);
+            WindowState state = pendingRenderStates.remove(namespace);
+            if (mode != null && state != null) {
+                context.updateModeAndState(mode, state);
+            }
+        }
     }
 
     @Override
@@ -683,10 +707,17 @@ public abstract class VaadinPortlet<C extends Component> extends GenericPortlet
                 "Unable to initialize component, UI instance not available from "
                         + component.getClass().getName()));
 
-        String windowName = ui.getInternals().getExtendedClientDetails()
-                .getWindowName();
         String namespace = VaadinPortletResponse.getCurrentPortletResponse()
                 .getNamespace();
+        String windowName;
+        if (ui.getInternals().getExtendedClientDetails() != null) {
+            windowName = ui.getInternals().getExtendedClientDetails()
+                    .getWindowName();
+        } else {
+            // Without @PreserveOnRefresh, extended client details may not
+            // be available yet. Use the namespace as a stable fallback.
+            windowName = namespace;
+        }
         VaadinSession session = ui.getSession();
         PortletViewContext context;
 
@@ -701,16 +732,27 @@ public abstract class VaadinPortlet<C extends Component> extends GenericPortlet
         }
         PortletRequest request = VaadinPortletRequest
                 .getCurrentPortletRequest();
+
+        // Use the mode/state from the render phase if available, since
+        // Liferay resource requests don't carry the correct portlet mode.
+        PortletMode mode = portlet.pendingRenderModes.containsKey(namespace)
+                ? portlet.pendingRenderModes.remove(namespace)
+                : request.getPortletMode();
+        WindowState state = portlet.pendingRenderStates.containsKey(namespace)
+                ? portlet.pendingRenderStates.remove(namespace)
+                : request.getWindowState();
+
         boolean needViewInit = false;
         if (context == null || context.getView() != component) {
             needViewInit = true;
+            portlet.getLogger().debug("initComponent: creating new context namespace={}, mode={}",
+                    namespace, mode);
             context = new PortletViewContext(component, portlet.isPortlet3,
-                    request.getPortletMode(), request.getWindowState());
+                    mode, state);
             portlet.setViewContext(session, namespace, windowName, context);
         }
         context.init();
-        context.updateModeAndState(request.getPortletMode(),
-                request.getWindowState());
+        context.updateModeAndState(mode, state);
         if (needViewInit && component instanceof PortletView) {
             PortletView view = (PortletView) component;
             view.onPortletViewContextInit(context);
