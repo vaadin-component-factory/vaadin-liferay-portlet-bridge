@@ -191,11 +191,26 @@ if (!globalThis.Vaadin.Flow.Portlets) {
                     // This happens when Liferay fires its deferred scripts between registerElement and now
                     try {
                         let liferayData = globalThis.Vaadin.Flow.Portlets._liferayData;
+                        console.log('[Vaadin Debug] _liferayData exists:', !!liferayData, 'has entry:', !!(liferayData && liferayData[portletRegistryName]));
                         if (liferayData && liferayData[portletRegistryName]) {
-                            let portlets = globalThis.portlet.data.pageRenderState.portlets;
+                            let prs = globalThis.portlet.data.pageRenderState;
+                            let portlets = prs.portlets;
+                            console.log('[Vaadin Debug] portlets[id] before write:', portlets[portletRegistryName]);
+                            console.log('[Vaadin Debug] Object.isExtensible(portlets):', Object.isExtensible(portlets));
+                            console.log('[Vaadin Debug] portlet.data has getter:', !!Object.getOwnPropertyDescriptor(globalThis.portlet.data, 'pageRenderState')?.get);
                             if (!portlets[portletRegistryName] || !portlets[portletRegistryName].allowedPM) {
-                                // Data was wiped or incomplete, re-inject from backup
-                                portlets[portletRegistryName] = liferayData[portletRegistryName];
+                                if (Object.isExtensible(portlets)) {
+                                    portlets[portletRegistryName] = liferayData[portletRegistryName];
+                                } else {
+                                    let newPortlets = Object.assign({}, portlets);
+                                    newPortlets[portletRegistryName] = liferayData[portletRegistryName];
+                                    let newPrs = Object.assign({}, prs);
+                                    newPrs.portlets = newPortlets;
+                                    globalThis.portlet.data.pageRenderState = newPrs;
+                                }
+                                console.log('[Vaadin Debug] portlets[id] after write:', globalThis.portlet.data.pageRenderState.portlets[portletRegistryName]);
+                            } else {
+                                console.log('[Vaadin Debug] re-injection skipped, data appears present');
                             }
                         }
                     } catch (e) {
