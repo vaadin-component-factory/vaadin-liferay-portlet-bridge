@@ -109,6 +109,35 @@ if (!globalThis.Vaadin.Flow.Portlets) {
     // Store Vaadin portlet data in a location Liferay won't overwrite
     globalThis.Vaadin.Flow.Portlets._liferayData = globalThis.Vaadin.Flow.Portlets._liferayData || {};
 
+    // Intercept pageRenderState on portlet.data so that whenever Liferay replaces
+    // the object (e.g. via <aui:script>), Vaadin portlet entries are merged into the
+    // new object immediately. This prevents Liferay's module-level pageRenderState
+    // variable from holding a stale reference without Vaadin data.
+    globalThis.Vaadin.Flow.Portlets._installPageRenderStateInterceptor = function () {
+        if (globalThis.Vaadin.Flow.Portlets._prsIntercepted) return;
+        var data = globalThis.portlet && globalThis.portlet.data;
+        if (!data) return;
+        var currentPRS = data.pageRenderState;
+        Object.defineProperty(data, 'pageRenderState', {
+            get: function () { return currentPRS; },
+            set: function (newPRS) {
+                currentPRS = newPRS;
+                var liferayData = globalThis.Vaadin.Flow.Portlets._liferayData;
+                if (newPRS && newPRS.portlets && liferayData) {
+                    var keys = Object.keys(liferayData);
+                    for (var i = 0; i < keys.length; i++) {
+                        if (!newPRS.portlets[keys[i]]) {
+                            newPRS.portlets[keys[i]] = liferayData[keys[i]];
+                        }
+                    }
+                }
+            },
+            configurable: true,
+            enumerable: true
+        });
+        globalThis.Vaadin.Flow.Portlets._prsIntercepted = true;
+    };
+
     globalThis.Vaadin.Flow.Portlets.registerElement = function (tag, portletRegistryName, windowStates, portletModes, actionUrl) {
         // <liferay>
         // Force objects, urls and arrays for liferay portlet data to enable hub registration and hub usage
@@ -129,6 +158,10 @@ if (!globalThis.Vaadin.Flow.Portlets) {
 
             // Store backup copy that Liferay won't touch
             globalThis.Vaadin.Flow.Portlets._liferayData[portletRegistryName] = portletData;
+
+            // Install interceptor so any future pageRenderState replacement
+            // automatically merges Vaadin portlet entries
+            globalThis.Vaadin.Flow.Portlets._installPageRenderStateInterceptor();
 
             // Also write to pageRenderState (may be overwritten by Liferay later)
             globalThis.portlet.data.pageRenderState.portlets[portletRegistryName] =
@@ -187,31 +220,13 @@ if (!globalThis.Vaadin.Flow.Portlets) {
             if (!portletObj.hub) {
                 if (typeof portlet !== 'undefined' && portlet && typeof portlet.register === 'function') {
                     // <liferay>
-                    // Re-inject Vaadin portlet data if Liferay's <aui:script> replaced pageRenderState
-                    // This happens when Liferay fires its deferred scripts between registerElement and now
+                    // Ensure interceptor is active and trigger a re-merge of Vaadin
+                    // portlet data into the current pageRenderState object
                     try {
-                        let liferayData = globalThis.Vaadin.Flow.Portlets._liferayData;
-                        console.log('[Vaadin Debug] _liferayData exists:', !!liferayData, 'has entry:', !!(liferayData && liferayData[portletRegistryName]));
-                        if (liferayData && liferayData[portletRegistryName]) {
-                            let prs = globalThis.portlet.data.pageRenderState;
-                            let portlets = prs.portlets;
-                            console.log('[Vaadin Debug] portlets[id] before write:', portlets[portletRegistryName]);
-                            console.log('[Vaadin Debug] Object.isExtensible(portlets):', Object.isExtensible(portlets));
-                            console.log('[Vaadin Debug] portlet.data has getter:', !!Object.getOwnPropertyDescriptor(globalThis.portlet.data, 'pageRenderState')?.get);
-                            if (!portlets[portletRegistryName] || !portlets[portletRegistryName].allowedPM) {
-                                if (Object.isExtensible(portlets)) {
-                                    portlets[portletRegistryName] = liferayData[portletRegistryName];
-                                } else {
-                                    let newPortlets = Object.assign({}, portlets);
-                                    newPortlets[portletRegistryName] = liferayData[portletRegistryName];
-                                    let newPrs = Object.assign({}, prs);
-                                    newPrs.portlets = newPortlets;
-                                    globalThis.portlet.data.pageRenderState = newPrs;
-                                }
-                                console.log('[Vaadin Debug] portlets[id] after write:', globalThis.portlet.data.pageRenderState.portlets[portletRegistryName]);
-                            } else {
-                                console.log('[Vaadin Debug] re-injection skipped, data appears present');
-                            }
+                        globalThis.Vaadin.Flow.Portlets._installPageRenderStateInterceptor();
+                        var currentPRS = globalThis.portlet.data.pageRenderState;
+                        if (currentPRS) {
+                            globalThis.portlet.data.pageRenderState = currentPRS;
                         }
                     } catch (e) {
                         console.warn('Vaadin Portlet: Could not re-inject pageRenderState for ' + portletRegistryName, e);
