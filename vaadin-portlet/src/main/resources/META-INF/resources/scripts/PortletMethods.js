@@ -227,6 +227,33 @@ if (!globalThis.Vaadin.Flow.Portlets) {
                         portletObj.hub = hub;
 
                         hub.addEventListener('portlet.onStateChange', function (type, state) {
+                            if (!state) return;
+                            const prevMode = portletObj._lastPortletMode;
+                            const prevWindowState = portletObj._lastWindowState;
+                            portletObj._lastPortletMode = state.portletMode;
+                            portletObj._lastWindowState = state.windowState;
+
+                            // Liferay's hub.setRenderState() only updates
+                            // client-side state — it does NOT make a server
+                            // request.  When mode or window state changes we
+                            // must explicitly send a hub.action() so the server
+                            // learns about the new mode.
+                            if (prevMode !== undefined &&
+                                (prevMode !== state.portletMode || prevWindowState !== state.windowState)) {
+                                globalThis.Vaadin.Flow.Portlets.executeWhenHubIdle(hub, () => {
+                                    const params = hub.newParameters();
+                                    params['vaadin.ms'] = [state.portletMode];
+                                    params['vaadin.ws'] = [state.windowState];
+                                    hub.action(params).then(() => {
+                                        const clients = elem.constructor._getClients();
+                                        if (clients && portletObj.appId && clients[portletObj.appId]) {
+                                            clients[portletObj.appId].poll();
+                                        }
+                                    }).catch(error => {
+                                        console.warn('Vaadin Portlet: mode sync failed for ' + portletRegistryName, error);
+                                    });
+                                });
+                            }
                         });
                         portletObj.eventPoller = globalThis.Vaadin.Flow.Portlets.eventPoller;
                         if (portletObj.listeners) {
