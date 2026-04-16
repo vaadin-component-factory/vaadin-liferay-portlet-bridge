@@ -21,11 +21,14 @@ package com.vaadin.flow.portal;
  * #L%
  */
 
+import jakarta.portlet.PortletResponse;
 import jakarta.servlet.http.Cookie;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.Serializable;
+
+import org.slf4j.LoggerFactory;
 
 import com.vaadin.flow.server.VaadinRequest;
 import com.vaadin.flow.server.VaadinResponse;
@@ -49,6 +52,23 @@ class PortletUidlRequestHandler extends UidlRequestHandler {
     @Override
     public boolean synchronizedHandleRequest(VaadinSession session, VaadinRequest request,
                                              VaadinResponse response) throws IOException {
+        // Apply any pending portlet mode/state captured during the render phase.
+        // With @PreserveOnRefresh the UI/component is reused across page reloads
+        // (e.g. mode switches), so initComponent is not called again.  The render
+        // phase stores the new mode in pendingRenderModes but nothing consumed it —
+        // we do it here, inside the session lock, before the UIDL is processed.
+        try {
+            VaadinPortlet<?> portlet = VaadinPortlet.getCurrent();
+            PortletResponse portletResponse = VaadinPortletService.getCurrentPortletResponse();
+            if (portlet != null && portletResponse != null) {
+                String namespace = portletResponse.getNamespace();
+                portlet.applyPendingModeAndState(namespace);
+            }
+        } catch (Exception e) {
+            LoggerFactory.getLogger(getClass())
+                    .debug("Could not apply pending mode/state in UIDL handler", e);
+        }
+
         VaadinResponseWrapper vaadinResponseWrapper =
                 new VaadinResponseWrapper(request, response);
         return super.synchronizedHandleRequest(session, request, vaadinResponseWrapper);

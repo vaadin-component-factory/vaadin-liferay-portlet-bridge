@@ -27,6 +27,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import jakarta.portlet.ActionRequest;
@@ -86,6 +87,8 @@ public abstract class VaadinPortlet<C extends Component> extends GenericPortlet
     private static final String VAADIN_EVENT = "vaadin.ev";
     private static final String VAADIN_UID = "vaadin.uid";
     private static final String VAADIN_WINDOW_NAME = "vaadin.wn";
+    private static final String VAADIN_MODE_SYNC = "vaadin.ms";
+    private static final String VAADIN_STATE_SYNC = "vaadin.ws";
     private static final String ACTION_STATE = "state";
     private static final String ACTION_MODE = "mode";
     private static final String DEV_MODE_ERROR_MESSAGE = "<h2>⚠️Vaadin Portlet does not work in development mode running webpack-dev-server</h2>"
@@ -148,13 +151,15 @@ public abstract class VaadinPortlet<C extends Component> extends GenericPortlet
 
     // Quick lookup for PortletViewContext by namespace, used by doDispatch
     // to update mode/state on @PreserveOnRefresh reloads.
-    private final Map<String, PortletViewContext> activeContexts = new HashMap<>();
+    private final Map<String, PortletViewContext> activeContexts = new ConcurrentHashMap<>();
 
     // Mode/state from the render phase. Resource requests in Liferay don't
     // carry the correct portlet mode, so we capture it during render and
     // apply it in initComponent (inside the session lock).
-    private final Map<String, PortletMode> pendingRenderModes = new HashMap<>();
-    private final Map<String, WindowState> pendingRenderStates = new HashMap<>();
+    // ConcurrentHashMap ensures visibility across the render thread (which
+    // writes) and the resource/UIDL thread (which reads).
+    private final Map<String, PortletMode> pendingRenderModes = new ConcurrentHashMap<>();
+    private final Map<String, WindowState> pendingRenderStates = new ConcurrentHashMap<>();
 
     /**
      * Portlet component exporter.
@@ -415,6 +420,24 @@ public abstract class VaadinPortlet<C extends Component> extends GenericPortlet
 
             response.setWindowState(windowState);
             response.setPortletMode(portletMode);
+        } else if (names.contains(VAADIN_MODE_SYNC)) {
+            // Portlet 3.0 mode/state sync sent by the onStateChange handler.
+            // Liferay's hub.setRenderState() only updates client-side state
+            // and does not trigger a server render, so the JS side sends an
+            // explicit hub.action() to inform the server of the new mode.
+            // Setting them on the ActionResponse causes the portal to issue
+            // a render request with the correct mode, which doDispatch will
+            // capture in pendingRenderModes for the UIDL handler to apply.
+            String modeStr = request.getActionParameters()
+                    .getValue(VAADIN_MODE_SYNC);
+            String stateStr = request.getActionParameters()
+                    .getValue(VAADIN_STATE_SYNC);
+            if (modeStr != null) {
+                response.setPortletMode(new PortletMode(modeStr));
+            }
+            if (stateStr != null) {
+                response.setWindowState(new WindowState(stateStr));
+            }
         } else if (names.contains(VAADIN_EVENT)) {
             String event = request.getActionParameters().getValue(VAADIN_EVENT);
             String uid = request.getActionParameters().getValue(VAADIN_UID);
