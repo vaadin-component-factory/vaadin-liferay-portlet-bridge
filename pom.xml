@@ -4,24 +4,18 @@
     xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>vaadin-portlet-parent</artifactId>
-    <name>Portlet support</name>
+    <groupId>org.vaadin.componentfactory</groupId>
+    <artifactId>vaadin-liferay-portlet-parent</artifactId>
+    <name>Vaadin Liferay Portlet support</name>
     <packaging>pom</packaging>
-    <version>2.1-SNAPSHOT</version>
-
-    <parent>
-        <groupId>com.vaadin</groupId>
-        <artifactId>vaadin-parent</artifactId>
-        <version>3.0.0</version>
-    </parent>
+    <version>4.0.0-SNAPSHOT</version>
 
     <modules>
-        <module>vaadin-portlet</module>
         <module>vaadin-portlet-cdi</module>
         <!-- Pluto Java 11 compatibility is coming perhaps December 2022 -->
         <!-- see https://www.mail-archive.com/pluto-dev@portals.apache.org/msg05719.html -->
         <!-- and https://github.com/vaadin/portlet/issues/226-->
-<!--        <module>vaadin-portlet-integration-tests</module>-->
+<!--    <module>vaadin-portlet-integration-tests</module>-->
         <module>vaadin-portlet-liferay-integration-tests</module>
     </modules>
 
@@ -29,7 +23,9 @@
         <name>Vaadin Ltd</name>
         <url>http://vaadin.com</url>
     </organization>
-    <url>http://vaadin.com</url>
+
+    <url>https://vaadin.com/directory/</url>
+
     <licenses>
         <license>
             <name>Vaadin Commercial License and Service Terms</name>
@@ -37,21 +33,29 @@
         </license>
     </licenses>
 
-    <inceptionYear>2019</inceptionYear>
+    <inceptionYear>2026</inceptionYear>
 
-    <scm>
-        <connection>scm:https:https://github.com/vaadin/portlet.git</connection>
-        <developerConnection>scm:git:git@github.com:vaadin/portlet.git</developerConnection>
-        <url>https://github.com/vaadin/portlet.git</url>
-    </scm>
+    <distributionManagement>
+        <snapshotRepository>
+            <id>vaadin-snapshots</id>
+            <name>Vaadin snapshot repository</name>
+            <url>http://oss.sonatype.org/content/repositories/vaadin-snapshots/</url>
+        </snapshotRepository>
+        <repository>
+            <id>vaadin-addons</id>
+            <name>Vaadin add-ons repository</name>
+            <url>http://tools.vaadin.com/nexus/content/repositories/vaadin-addons</url>
+        </repository>
+    </distributionManagement>
 
     <properties>
-        <maven.compiler.source>21</maven.compiler.source>
-        <maven.compiler.target>21</maven.compiler.target>
+        <java.version>21</java.version>
+        <maven.compiler.source>${java.version}</maven.compiler.source>
+        <maven.compiler.target>${java.version}</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <jsinterop.version>1.0.1</jsinterop.version>
-        <sonar.java.source>21</sonar.java.source>
+        <sonar.java.source>${java.version}</sonar.java.source>
         <sonar.analysis.mode>preview</sonar.analysis.mode>
         <sonar.issuesReport.console.enable>true
         </sonar.issuesReport.console.enable>
@@ -78,7 +82,12 @@
         <flow.version>25.0.5</flow.version>
         <flow.cdi.version>16.0.0</flow.cdi.version>
         <jetty.version>12.0.16</jetty.version>
+        <jakarta.validation.version>3.0.0</jakarta.validation.version>
         <webdrivermanager.version>5.2.3</webdrivermanager.version>
+        <vaadin-liferay-portlet-bridge.version>4.0.0-beta1</vaadin-liferay-portlet-bridge.version>
+
+        <liferay.kernel.version>178.0.1</liferay.kernel.version>
+        <deltaspike.version>1.8.1</deltaspike.version>
 
         <maven.test.skip>false</maven.test.skip>
     </properties>
@@ -134,6 +143,11 @@
 
     <dependencyManagement>
         <dependencies>
+            <dependency>
+                <groupId>org.vaadin.componentfactory</groupId>
+                <artifactId>vaadin-liferay-portlet-bridge</artifactId>
+                <version>${vaadin-liferay-portlet-bridge.version}</version>
+            </dependency>
             <dependency>
                 <groupId>org.mockito</groupId>
                 <artifactId>mockito-core</artifactId>
@@ -229,9 +243,8 @@
                                 <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
                             </manifest>
                             <manifestEntries>
-                                <CvdlName>vaadin-portlet</CvdlName>
+                                <CvdlName>vaadin-liferay-portlet-bridge</CvdlName>
                             </manifestEntries>
-
                         </archive>
                     </configuration>
                 </plugin>
@@ -296,82 +309,6 @@
                         </dependency>
                     </dependencies>
                 </plugin>
-                <!--This plugin's configuration is used to store Eclipse
-                    m2e settings only. It has no influence on the Maven build itself. -->
-                <plugin>
-                    <groupId>org.eclipse.m2e</groupId>
-                    <artifactId>lifecycle-mapping</artifactId>
-                    <version>1.0.0</version>
-                    <configuration>
-                        <lifecycleMappingMetadata>
-                            <pluginExecutions>
-                                <pluginExecution>
-                                    <pluginExecutionFilter>
-                                        <groupId>
-                                            org.commonjava.maven.plugins
-                                        </groupId>
-                                        <artifactId>
-                                            directory-maven-plugin
-                                        </artifactId>
-                                        <versionRange>
-                                            [0.1,)
-                                        </versionRange>
-                                        <goals>
-                                            <goal>highest-basedir</goal>
-                                        </goals>
-                                    </pluginExecutionFilter>
-                                    <action>
-                                        <ignore></ignore>
-                                    </action>
-                                </pluginExecution>
-                                <pluginExecution>
-                                    <pluginExecutionFilter>
-                                        <groupId>
-                                            org.apache.maven.plugins
-                                        </groupId>
-                                        <artifactId>
-                                            maven-plugin-plugin
-                                        </artifactId>
-                                        <versionRange>
-                                            [3.2,)
-                                        </versionRange>
-                                        <goals>
-                                            <goal>descriptor</goal>
-                                        </goals>
-                                    </pluginExecutionFilter>
-                                    <action>
-                                        <ignore></ignore>
-                                    </action>
-                                </pluginExecution>
-                            </pluginExecutions>
-                        </lifecycleMappingMetadata>
-                    </configuration>
-                </plugin>
-                <plugin>
-                    <groupId>com.mycila</groupId>
-                    <artifactId>license-maven-plugin</artifactId>
-                    <version>2.6</version>
-                    <configuration>
-                        <header>src/license/vclst/header.txt</header>
-                        <quiet>false</quiet>
-                        <failIfMissing>true</failIfMissing>
-                        <aggregate>false</aggregate>
-                        <useDefaultExcludes>true</useDefaultExcludes>
-                        <useDefaultMapping>true</useDefaultMapping>
-                        <encoding>UTF-8</encoding>
-                        <properties>
-                            <year>${project.inceptionYear}-2022</year>
-                        </properties>
-                        <excludes>
-                            <exclude>target/**</exclude>
-                            <exclude>**/*.xml</exclude>
-                            <exclude>**/*.properties</exclude>
-                            <exclude>src/license/**/*</exclude>
-                            <exclude>**/*.txt</exclude>
-                            <exclude>**/node_modules/**</exclude>
-                        </excludes>
-                    </configuration>
-                </plugin>
                 <plugin>
                     <groupId>com.github.siom79.japicmp</groupId>
                     <artifactId>japicmp-maven-plugin</artifactId>
@@ -383,8 +320,31 @@
                         </dependency>
                     </dependencies>
                 </plugin>
+                <plugin>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>license-maven-plugin</artifactId>
+                    <version>2.4.0</version>
+                    <!--  Use `mvn license:update-file-header` to fix header problems -->
+                    <configuration>
+                        <licenseName>cval3</licenseName>
+                        <licenseResolver>${project.baseUri}src/license</licenseResolver>
+                        <includes>
+                            <include>**/main/**/*.java</include>
+                        </includes>
+                        <failOnMissingHeader>true</failOnMissingHeader>
+                        <failOnNotUptodateHeader>true</failOnNotUptodateHeader>
+                    </configuration>
+                    <executions>
+                        <execution>
+                            <id>license</id>
+                            <phase>process-sources</phase>
+                            <goals>
+                                <goal>update-file-header</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
             </plugins>
-
         </pluginManagement>
     </build>
 </project>

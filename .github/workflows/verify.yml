@@ -1,0 +1,31 @@
+name: run validations
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  verify:
+    if: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+
+      - name: extract Java version from pom.xml
+        id: java
+        run: |
+          JAVA_VERSION="$(mvn -q help:evaluate -Dexpression=java.version -DforceStdout | tail -n 1)"
+          echo "version=$JAVA_VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: setup Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: ${{ steps.java.outputs.version }}
+          cache: maven
+
+      - name: maven verify
+        working-directory: vaadin-portlet
+        run: mvn -B -ntp -Dvaadin.commercialWithBanner verify

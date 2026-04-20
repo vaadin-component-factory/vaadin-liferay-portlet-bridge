@@ -3,24 +3,25 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>org.vaadin.componentfactory</groupId>
+        <artifactId>vaadin-liferay-portlet-parent</artifactId>
+        <version>3.0.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>vaadin-portlet-liferay-integration-tests</artifactId>
+    <name>Vaadin Liferay Integration Tests</name>
+    <packaging>pom</packaging>
+
     <modules>
         <module>liferay-portlet-deployer</module>
         <module>vaadin-portlet-liferay-it-shared</module>
         <module>liferay-tests-generic</module>
         <module>liferay-portlet30</module>
     </modules>
-    <parent>
-        <groupId>com.vaadin</groupId>
-        <artifactId>vaadin-portlet-parent</artifactId>
-        <version>2.1-SNAPSHOT</version>
-    </parent>
-    <artifactId>vaadin-portlet-liferay-integration-tests</artifactId>
-    <name>Liferay Integration Tests</name>
-    <packaging>pom</packaging>
 
     <properties>
         <liferay.version>7.4.3.5-ga5</liferay.version>
-        <liferay.kernel.version>178.0.1</liferay.kernel.version>
         <tomcat.version>9.0.56</tomcat.version>
         <liferay.home.directory>
             ${project.build.directory}/liferay-ce-portal-${liferay.version}
@@ -38,8 +39,7 @@
         <maven.compiler.source>21</maven.compiler.source>
         <maven.compiler.target>21</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <project.reporting.outputEncoding>UTF-8
-        </project.reporting.outputEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
         <vaadin.productionMode>true</vaadin.productionMode>
 
@@ -51,24 +51,11 @@
         <dependencies>
             <dependency>
                 <groupId>com.vaadin</groupId>
-                <artifactId>vaadin-portlet</artifactId>
-                <version>${project.version}</version>
+                <artifactId>vaadin-bom</artifactId>
+                <type>pom</type>
+                <scope>import</scope>
+                <version>${vaadin.version}</version>
             </dependency>
-
-            <!-- Test dependency from components -->
-            <dependency>
-                <groupId>com.vaadin</groupId>
-                <artifactId>flow-data</artifactId>
-                <version>${flow.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>com.vaadin</groupId>
-                <artifactId>vaadin-testbench-core</artifactId>
-                <version>${testbench.version}</version>
-                <scope>test</scope>
-            </dependency>
-
 
             <!-- Added to provide logging output as Flow uses -->
             <!-- the unbound SLF4J no-operation (NOP) logger implementation -->
@@ -92,17 +79,6 @@
                 <artifactId>jakarta.servlet-api</artifactId>
                 <version>6.0.0</version>
                 <scope>provided</scope>
-            </dependency>
-
-            <dependency>
-                <groupId>com.vaadin</groupId>
-                <artifactId>flow-server-production-mode</artifactId>
-                <version>${flow.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.vaadin</groupId>
-                <artifactId>vaadin-lumo-theme</artifactId>
-                <version>${flow.version}</version>
             </dependency>
 
             <!-- Test dependencies -->
@@ -315,6 +291,7 @@
                     <plugin>
                         <groupId>com.vaadin</groupId>
                         <artifactId>flow-maven-plugin</artifactId>
+                        <version>${flow.version}</version>
                         <executions>
                             <execution>
                                 <goals>

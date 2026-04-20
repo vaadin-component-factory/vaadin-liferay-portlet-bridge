@@ -25,3 +25,10 @@
 **/index.html
 **/web-component.html
 
+**/src/main/bundles/
+
+*.log
+*.png
+*.webp
+*.jpg
+.claude/

@@ -8,6 +8,19 @@
  */
 package com.vaadin.flow.portal;
 
+/*-
+ * #%L
+ * Vaadin Liferay Portlet Bridge
+ * %%
+ * Copyright (C) 2026 Vaadin Ltd
+ * %%
+ * This program is available under Vaadin Commercial License and Service Terms.
+ * 
+ * See {@literal <https://vaadin.com/commercial-license-and-service-terms>} for the full
+ * license.
+ * #L%
+ */
+
 import jakarta.servlet.http.Cookie;
 import java.io.IOException;
 import java.io.OutputStream;
