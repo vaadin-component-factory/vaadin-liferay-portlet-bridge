@@ -16,7 +16,7 @@ jobs:
       - name: extract Java version from pom.xml
         id: java
         run: |
-          JAVA_VERSION="$(mvn -q help:evaluate -Dexpression=java.version -DforceStdout | tail -n 1)"
+          JAVA_VERSION="$(mvn -N -q help:evaluate -Dexpression=maven.compiler.target -DforceStdout)"
           echo "version=$JAVA_VERSION" >> "$GITHUB_OUTPUT"
 
       - name: setup Java
