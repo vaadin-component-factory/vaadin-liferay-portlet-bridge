@@ -14,9 +14,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 import com.vaadin.flow.server.InitParameters;
@@ -35,7 +35,7 @@ public class VaadinPortletContextTest {
     private final Map<String, Object> attributeMap = new HashMap<>();
     private Map<String, String> properties;
 
-    @Before
+    @BeforeEach
     public void setup() {
         PortletContext portletContext = Mockito.mock(PortletContext.class);
         Mockito.when(portletContext.getAttribute(Mockito.anyString())).then(invocationOnMock -> attributeMap.get(invocationOnMock.getArguments()[0].toString()));
@@ -59,25 +59,27 @@ public class VaadinPortletContextTest {
 
     @Test
     public void getAttributeWithProvider() {
-        Assert.assertNull(context.getAttribute(String.class));
+        Assertions.assertNull(context.getAttribute(String.class));
 
         String value = context.getAttribute(String.class,
                 VaadinPortletContextTest::testAttributeProvider);
-        Assert.assertEquals(testAttributeProvider(), value);
+        Assertions.assertEquals(testAttributeProvider(), value);
 
-        Assert.assertEquals("Value from provider should be persisted",
-                testAttributeProvider(), context.getAttribute(String.class));
+        Assertions.assertEquals(testAttributeProvider(),
+                context.getAttribute(String.class),
+                "Value from provider should be persisted");
     }
 
-    @Test(expected = AssertionError.class)
+    @Test
     public void setNullAttributeNotAllowed() {
-        context.setAttribute(null);
+        Assertions.assertThrows(AssertionError.class,
+                () -> context.setAttribute(null));
     }
 
     @Test
     public void getMissingAttributeWithoutProvider() {
         String value = context.getAttribute(String.class);
-        Assert.assertNull(value);
+        Assertions.assertNull(value);
     }
 
     @Test
@@ -85,30 +87,31 @@ public class VaadinPortletContextTest {
         String value = testAttributeProvider();
         context.setAttribute(value);
         String result = context.getAttribute(String.class);
-        Assert.assertEquals(value, result);
+        Assertions.assertEquals(value, result);
         // overwrite
         String newValue = "this is a new value";
         context.setAttribute(newValue);
         result = context.getAttribute(String.class);
-        Assert.assertEquals(newValue, result);
+        Assertions.assertEquals(newValue, result);
         // now the provider should not be called, so value should be still there
         result = context.getAttribute(String.class,
                 () -> {
                     throw new AssertionError("Should not be called");
                 });
-        Assert.assertEquals(newValue, result);
+        Assertions.assertEquals(newValue, result);
     }
 
     @Test
     public void testGetPropertyNames_returnsExpectedProperties() {
         List<String> list = Collections.list(context.getContextParameterNames());
-        Assert.assertEquals(
-                "Context should return only keys defined in PortletContext",
-                properties.size(), list.size());
+        Assertions.assertEquals(properties.size(), list.size(),
+                "Context should return only keys defined in PortletContext");
         for (String key : properties.keySet()) {
-            Assert.assertEquals(String.format(
-                    "Value should be same from context for key '%s'", key),
-                    properties.get(key), context.getContextParameter(key));
+            Assertions.assertEquals(properties.get(key),
+                    context.getContextParameter(key),
+                    String.format(
+                            "Value should be same from context for key '%s'",
+                            key));
         }
     }
 

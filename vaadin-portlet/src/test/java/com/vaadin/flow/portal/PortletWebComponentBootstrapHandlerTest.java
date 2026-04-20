@@ -10,10 +10,10 @@ package com.vaadin.flow.portal;
 
 import java.io.UnsupportedEncodingException;
 
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 import com.vaadin.flow.function.DeploymentConfiguration;
@@ -27,7 +27,7 @@ public class PortletWebComponentBootstrapHandlerTest {
     private DeploymentConfiguration configuration = Mockito
             .mock(DeploymentConfiguration.class);
 
-    @Before
+    @BeforeEach
     public void setUp() {
         VaadinPortletService service = Mockito.mock(VaadinPortletService.class);
         Mockito.when(service.getDeploymentConfiguration())
@@ -35,7 +35,7 @@ public class PortletWebComponentBootstrapHandlerTest {
         VaadinService.setCurrent(service);
     }
 
-    @After
+    @AfterEach
     public void tearDown() {
         CurrentInstance.clearAll();
     }
@@ -48,7 +48,7 @@ public class PortletWebComponentBootstrapHandlerTest {
                 PortletConstants.PORTLET_PARAMETER_STATIC_RESOURCES_MAPPING),
                 Mockito.anyString())).thenReturn("");
         String path = handler.modifyPath("bar", "./VAADIN/foo");
-        Assert.assertEquals("/./VAADIN/foo", path);
+        Assertions.assertEquals("/./VAADIN/foo", path);
     }
 
     @Test
@@ -59,7 +59,7 @@ public class PortletWebComponentBootstrapHandlerTest {
                 PortletConstants.PORTLET_PARAMETER_STATIC_RESOURCES_MAPPING),
                 Mockito.anyString())).thenReturn("baz");
         String path = handler.modifyPath("bar", "./VAADIN/foo");
-        Assert.assertEquals("/baz/./VAADIN/foo", path);
+        Assertions.assertEquals("/baz/./VAADIN/foo", path);
     }
 
     @Test
@@ -70,6 +70,6 @@ public class PortletWebComponentBootstrapHandlerTest {
                 PortletConstants.PORTLET_PARAMETER_STATIC_RESOURCES_MAPPING),
                 Mockito.anyString())).thenReturn("/baz/");
         String path = handler.modifyPath("bar", "./VAADIN/foo");
-        Assert.assertEquals("/baz/./VAADIN/foo", path);
+        Assertions.assertEquals("/baz/./VAADIN/foo", path);
     }
 }

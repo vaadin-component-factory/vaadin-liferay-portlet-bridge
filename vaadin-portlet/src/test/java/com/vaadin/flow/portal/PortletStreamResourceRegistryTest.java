@@ -13,9 +13,9 @@ import jakarta.portlet.ResourceURL;
 import jakarta.portlet.filter.ResourceURLWrapper;
 import java.net.URI;
 
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 import com.vaadin.flow.component.UI;
@@ -32,7 +32,7 @@ public class PortletStreamResourceRegistryTest {
     private final StreamResourceMock streamResourceMock = new StreamResourceMock();
     private final String resourceId = streamResourceMock.getId();
 
-    @Before
+    @BeforeEach
     public void init() {
         service = Mockito.mock(VaadinPortletService.class);
         VaadinPortletSession session = new VaadinPortletSession(service) {
@@ -81,7 +81,7 @@ public class PortletStreamResourceRegistryTest {
             URI resourceUri = registration.getResourceUri();
             String expected = "." + resourceUrl + "/VAADIN/dynamic/resource/42/"
                     + resourceId + "/test.xml";
-            Assert.assertEquals(expected, resourceUri.toString());
+            Assertions.assertEquals(expected, resourceUri.toString());
         } finally {
             if (vaadinResponse != null) {
                 CurrentInstance.set(VaadinResponse.class, vaadinResponse);
@@ -112,7 +112,7 @@ public class PortletStreamResourceRegistryTest {
             URI resourceUri = registration.getResourceUri();
             String expected = resourceUrl + "/VAADIN/dynamic/resource/42/"
                     + resourceId + "/test.xml";
-            Assert.assertEquals(expected, resourceUri.toString());
+            Assertions.assertEquals(expected, resourceUri.toString());
         } finally {
             if (vaadinResponse != null) {
                 CurrentInstance.set(VaadinResponse.class, vaadinResponse);
@@ -137,7 +137,7 @@ public class PortletStreamResourceRegistryTest {
             URI resourceUri = registration.getResourceUri();
             String expected = String.format(
                     "VAADIN/dynamic/resource/42/%s/test.xml", resourceId);
-            Assert.assertEquals(expected, resourceUri.toString());
+            Assertions.assertEquals(expected, resourceUri.toString());
         } finally {
             if (vaadinResponse != null) {
                 CurrentInstance.set(VaadinResponse.class, vaadinResponse);
