@@ -188,6 +188,11 @@ public abstract class VaadinPortlet<C extends Component> extends GenericPortlet
                 C component) {
             assert VaadinSession.getCurrent().hasLock();
 
+            // Pre-register the PortletViewContext synchronously so that it is
+            // discoverable from a view's onAttach override. Element attach
+            // listeners may run after the component's onAttach.
+            preRegisterViewContext(component);
+
             SerializableRunnable runnable = () -> initComponent(component);
             if (component.getElement().getNode().isAttached()) {
                 runnable.run();
@@ -791,10 +796,80 @@ public abstract class VaadinPortlet<C extends Component> extends GenericPortlet
         }
         context.init();
         context.updateModeAndState(mode, state);
-        if (needViewInit && component instanceof PortletView) {
+        // Fire onPortletViewContextInit once per context: either when we just
+        // created it (needViewInit), or when it was pre-registered eagerly by
+        // configureInstance and has not yet been initialized.
+        if ((needViewInit || !context.isViewInitialized())
+                && component instanceof PortletView) {
             PortletView view = (PortletView) component;
             view.onPortletViewContextInit(context);
+            context.setViewInitialized(true);
         }
+    }
+
+    /**
+     * Eagerly registers a {@link PortletViewContext} for {@code component}
+     * into the session map so that code looking it up from the component's
+     * {@link Component#onAttach(com.vaadin.flow.component.AttachEvent)} can
+     * find it, regardless of whether the onAttach override runs before or
+     * after {@link com.vaadin.flow.dom.Element} attach listeners.
+     * <p>
+     * The full initialization ({@link PortletViewContext#init()} and
+     * {@link PortletView#onPortletViewContextInit(PortletViewContext)}) still
+     * runs from the attach listener in {@link #initComponent(Component)}
+     * once the component is attached.
+     */
+    private static <C extends Component> void preRegisterViewContext(C component) {
+        VaadinSession session = VaadinSession.getCurrent();
+        if (session == null) {
+            return;
+        }
+        VaadinPortletResponse response = (VaadinPortletResponse) VaadinPortletService
+                .getCurrentResponse();
+        if (response == null) {
+            return;
+        }
+        VaadinPortlet<C> portlet = (VaadinPortlet<C>) getCurrent();
+        if (portlet == null) {
+            return;
+        }
+
+        String namespace = response.getPortletResponse().getNamespace();
+
+        String windowName;
+        UI ui = UI.getCurrent();
+        if (ui != null && ui.getInternals().getExtendedClientDetails() != null) {
+            windowName = normalizeWindowName(
+                    ui.getInternals().getExtendedClientDetails()
+                            .getWindowName());
+        } else {
+            windowName = namespace;
+        }
+
+        PortletViewContext existing;
+        try {
+            existing = portlet.getViewContext(session, namespace, windowName);
+        } catch (PortletException e) {
+            existing = null;
+        }
+        if (existing != null && existing.getView() == component) {
+            return;
+        }
+
+        PortletRequest request = VaadinPortletRequest.getCurrentPortletRequest();
+        PortletMode mode = portlet.pendingRenderModes.containsKey(namespace)
+                ? portlet.pendingRenderModes.get(namespace)
+                : (request != null ? request.getPortletMode() : PortletMode.VIEW);
+        WindowState state = portlet.pendingRenderStates.containsKey(namespace)
+                ? portlet.pendingRenderStates.get(namespace)
+                : (request != null ? request.getWindowState() : WindowState.NORMAL);
+
+        PortletViewContext context = new PortletViewContext(component,
+                portlet.isPortlet3, mode, state);
+        portlet.setViewContext(session, namespace, windowName, context);
+        portlet.getLogger().debug(
+                "preRegisterViewContext: namespace={}, windowName={}, mode={}",
+                namespace, windowName, mode);
     }
 
     // By default, portlet registration instruction can be sent to the client

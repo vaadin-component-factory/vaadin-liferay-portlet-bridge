@@ -71,6 +71,12 @@ public final class PortletViewContext implements Serializable {
 
     private String cachedNamespace;
 
+    // True once VaadinPortlet has invoked PortletView#onPortletViewContextInit
+    // for this context. Used to avoid double-firing when the context is
+    // registered before the component is attached and completed later from
+    // an attach listener.
+    private boolean viewInitialized;
+
     PortletViewContext(Component view, AtomicBoolean portlet3,
                        PortletMode portletMode, WindowState windowState) {
 
@@ -91,6 +97,14 @@ public final class PortletViewContext implements Serializable {
             doAddPortletModeChangeListener(
                     ((PortletModeHandler) view)::portletModeChange);
         }
+    }
+
+    boolean isViewInitialized() {
+        return viewInitialized;
+    }
+
+    void setViewInitialized(boolean viewInitialized) {
+        this.viewInitialized = viewInitialized;
     }
 
     /**

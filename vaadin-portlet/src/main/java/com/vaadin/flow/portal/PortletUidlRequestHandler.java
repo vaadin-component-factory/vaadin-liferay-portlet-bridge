@@ -66,7 +66,7 @@ class PortletUidlRequestHandler extends UidlRequestHandler {
             }
         } catch (Exception e) {
             LoggerFactory.getLogger(getClass())
-                    .debug("Could not apply pending mode/state in UIDL handler", e);
+                    .error("Could not apply pending mode/state in UIDL handler", e);
         }
 
         VaadinResponseWrapper vaadinResponseWrapper =

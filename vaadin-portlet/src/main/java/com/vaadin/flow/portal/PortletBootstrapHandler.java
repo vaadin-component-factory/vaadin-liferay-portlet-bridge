@@ -32,6 +32,8 @@ import java.io.PrintWriter;
 import java.util.Collections;
 import java.util.stream.Collectors;
 
+import org.slf4j.LoggerFactory;
+
 import com.vaadin.flow.function.DeploymentConfiguration;
 import com.vaadin.flow.server.SynchronizedRequestHandler;
 import com.vaadin.flow.server.VaadinRequest;
@@ -124,6 +126,8 @@ class PortletBootstrapHandler extends SynchronizedRequestHandler {
             writer.write("<" + tag + " data-portlet-id='" + namespace
                     + "' style='width: 100%;'></" + tag + ">");
         } catch (Exception exception) {
+            LoggerFactory.getLogger(PortletBootstrapHandler.class)
+                    .error("Portlet bootstrap failed", exception);
             String message = exception.getMessage();
             writer.write("<div style='color:red;'>" + message + "</div>");
         }
