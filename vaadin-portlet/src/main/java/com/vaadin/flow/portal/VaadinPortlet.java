@@ -723,14 +723,11 @@ public abstract class VaadinPortlet<C extends Component> extends GenericPortlet
                 "Unable to initialize component, UI instance not available from "
                         + component.getClass().getName()));
 
-        String windowName = normalizeWindowName(
-                ui.getInternals().getExtendedClientDetails().getWindowName());
-        String namespace = VaadinPortletResponse.getCurrentPortletResponse()
+        final String namespace = VaadinPortletResponse.getCurrentPortletResponse()
                 .getNamespace();
-        String windowName;
+        final String windowName;
         if (ui.getInternals().getExtendedClientDetails() != null) {
-            windowName = ui.getInternals().getExtendedClientDetails()
-                    .getWindowName();
+            windowName = normalizeWindowName(ui.getInternals().getExtendedClientDetails().getWindowName());
         } else {
             // Without @PreserveOnRefresh, extended client details may not
             // be available yet. Use the namespace as a stable fallback.

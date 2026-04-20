@@ -49,7 +49,7 @@ import com.vaadin.flow.server.VaadinResponse;
 import com.vaadin.flow.server.VaadinService;
 import com.vaadin.flow.server.VaadinSession;
 import com.vaadin.flow.server.communication.WebComponentBootstrapHandler;
-import com.vaadin.flow.server.frontend.FrontendUtils;
+import com.vaadin.flow.internal.FrontendUtils;
 import com.vaadin.pro.licensechecker.BuildType;
 import com.vaadin.pro.licensechecker.LicenseChecker;
 
