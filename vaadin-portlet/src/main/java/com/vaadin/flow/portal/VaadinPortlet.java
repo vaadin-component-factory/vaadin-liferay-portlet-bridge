@@ -446,7 +446,7 @@ public abstract class VaadinPortlet<C extends Component> extends GenericPortlet
         } else if (names.contains(VAADIN_EVENT)) {
             String event = request.getActionParameters().getValue(VAADIN_EVENT);
             String uid = request.getActionParameters().getValue(VAADIN_UID);
-            String windowName = normalizeWindowName(
+            String windowName = VaadinPortletUtil.normalizeWindowName(
                     request.getActionParameters().getValue(VAADIN_WINDOW_NAME));
             Map<String, String[]> map = new HashMap<>(
                     request.getParameterMap());
@@ -701,22 +701,6 @@ public abstract class VaadinPortlet<C extends Component> extends GenericPortlet
         }
     }
 
-    /**
-     * Normalizes a window name to ensure consistent session key lookup.
-     * <p>
-     * In Vaadin 25 web component mode, {@code ExtendedClientDetails.getWindowName()}
-     * may return the string {@code "null"} when {@code window.name} is empty,
-     * while the client-side portlet hub sends an empty string. This method
-     * normalizes both to an empty string to prevent session key mismatches
-     * that would silently prevent IPC events from being delivered.
-     */
-    static String normalizeWindowName(String windowName) {
-        if (windowName == null || "null".equals(windowName)) {
-            return "";
-        }
-        return windowName;
-    }
-
     private Logger getLogger() {
         return LoggerFactory.getLogger(VaadinPortlet.class);
     }
@@ -753,12 +737,15 @@ public abstract class VaadinPortlet<C extends Component> extends GenericPortlet
 
         final String namespace = VaadinPortletResponse.getCurrentPortletResponse()
                 .getNamespace();
+        final String rawWindowName;
         final String windowName;
         if (ui.getInternals().getExtendedClientDetails() != null) {
-            windowName = normalizeWindowName(ui.getInternals().getExtendedClientDetails().getWindowName());
+            rawWindowName = ui.getInternals().getExtendedClientDetails().getWindowName();
+            windowName = VaadinPortletUtil.normalizeWindowName(rawWindowName);
         } else {
             // Without @PreserveOnRefresh, extended client details may not
             // be available yet. Use the namespace as a stable fallback.
+            rawWindowName = null;
             windowName = namespace;
         }
         VaadinSession session = ui.getSession();
@@ -793,6 +780,8 @@ public abstract class VaadinPortlet<C extends Component> extends GenericPortlet
             context = new PortletViewContext(component, portlet.isPortlet3,
                     mode, state);
             portlet.setViewContext(session, namespace, windowName, context);
+            registerUnNormalizedAlias(portlet, session, namespace,
+                    windowName, rawWindowName, context);
         }
         context.init();
         context.updateModeAndState(mode, state);
@@ -836,13 +825,15 @@ public abstract class VaadinPortlet<C extends Component> extends GenericPortlet
 
         String namespace = response.getPortletResponse().getNamespace();
 
+        String rawWindowName;
         String windowName;
         UI ui = UI.getCurrent();
         if (ui != null && ui.getInternals().getExtendedClientDetails() != null) {
-            windowName = normalizeWindowName(
-                    ui.getInternals().getExtendedClientDetails()
-                            .getWindowName());
+            rawWindowName = ui.getInternals().getExtendedClientDetails()
+                    .getWindowName();
+            windowName = VaadinPortletUtil.normalizeWindowName(rawWindowName);
         } else {
+            rawWindowName = null;
             windowName = namespace;
         }
 
@@ -867,9 +858,29 @@ public abstract class VaadinPortlet<C extends Component> extends GenericPortlet
         PortletViewContext context = new PortletViewContext(component,
                 portlet.isPortlet3, mode, state);
         portlet.setViewContext(session, namespace, windowName, context);
+        registerUnNormalizedAlias(portlet, session, namespace, windowName,
+                rawWindowName, context);
         portlet.getLogger().debug(
-                "preRegisterViewContext: namespace={}, windowName={}, mode={}",
-                namespace, windowName, mode);
+                "preRegisterViewContext: namespace={}, windowName={}, rawWindowName={}, mode={}",
+                namespace, windowName, rawWindowName, mode);
+    }
+
+    /**
+     * Writes a second session-attribute entry for {@code context} under a
+     * key derived from the un-normalized window name, when that key differs
+     * from the normalized one. External lookup code that does not apply
+     * {@link VaadinPortletUtil#normalizeWindowName(String)} (e.g. because it builds the key by
+     * string-concatenating a raw {@code getWindowName()} value that may be
+     * Java {@code null} or the literal string {@code "null"}) can then still
+     * locate the context.
+     */
+    private static void registerUnNormalizedAlias(VaadinPortlet<?> portlet,
+            VaadinSession session, String namespace, String normalizedWindowName,
+            String rawWindowName, PortletViewContext context) {
+        String rawKey = String.valueOf(rawWindowName);
+        if (!Objects.equals(rawKey, normalizedWindowName)) {
+            portlet.setViewContext(session, namespace, rawKey, context);
+        }
     }
 
     // By default, portlet registration instruction can be sent to the client
