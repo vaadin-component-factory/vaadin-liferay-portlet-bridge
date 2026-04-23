@@ -22,6 +22,7 @@ package com.vaadin.flow.portal;
  */
 
 import com.vaadin.flow.component.Component;
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.internal.Pair;
 import com.vaadin.flow.portal.lifecycle.*;
 import com.vaadin.flow.shared.Registration;
@@ -292,8 +293,8 @@ public final class PortletViewContext implements Serializable {
      *            a window state change event.
      */
     void fireWindowStateEvent(WindowStateEvent event) {
-        windowStateListeners
-                .forEach(listener -> listener.windowStateChange(event));
+        dispatchWithCurrentUi(() -> windowStateListeners
+                .forEach(listener -> listener.windowStateChange(event)));
     }
 
     /**
@@ -303,8 +304,30 @@ public final class PortletViewContext implements Serializable {
      *            a portlet mode change event
      */
     void firePortletModeEvent(PortletModeEvent event) {
-        portletModeListeners
-                .forEach(listener -> listener.portletModeChange(event));
+        dispatchWithCurrentUi(() -> portletModeListeners
+                .forEach(listener -> listener.portletModeChange(event)));
+    }
+
+    /**
+     * Runs {@code dispatch} with {@link UI#getCurrent()} set to the UI the
+     * view is attached to, restoring the previous value afterwards. Makes
+     * {@code UI.getCurrent()} usable from mode/state listener code even when
+     * the firing path is invoked outside a request scope that has already
+     * populated the thread-local.
+     */
+    private void dispatchWithCurrentUi(Runnable dispatch) {
+        UI viewUi = view != null ? view.getUI().orElse(null) : null;
+        if (viewUi == null) {
+            dispatch.run();
+            return;
+        }
+        UI previous = UI.getCurrent();
+        UI.setCurrent(viewUi);
+        try {
+            dispatch.run();
+        } finally {
+            UI.setCurrent(previous);
+        }
     }
 
     /**

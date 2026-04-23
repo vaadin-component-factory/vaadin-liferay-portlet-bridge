@@ -434,6 +434,82 @@ public class PortletViewContextTest {
         Assertions.assertEquals(PortletMode.VIEW, context.getPortletMode());
     }
 
+    @Test
+    public void firePortletModeEvent_uiCurrentIsSetForListener() {
+        Div component = new Div();
+        ui.add(component);
+        PortletViewContext context = new PortletViewContext(
+                component, new AtomicBoolean(true), PortletMode.VIEW,
+                WindowState.NORMAL);
+
+        AtomicReference<UI> uiInsideListener = new AtomicReference<>();
+        context.addPortletModeChangeListener(
+                event -> uiInsideListener.set(UI.getCurrent()));
+
+        // Simulate the firing path where UI.getCurrent() is null
+        // (e.g. PortletUidlRequestHandler pre-processing).
+        CurrentInstance.set(UI.class, null);
+
+        context.firePortletModeEvent(Mockito.mock(PortletModeEvent.class));
+
+        Assertions.assertSame(ui, uiInsideListener.get(),
+                "UI.getCurrent() should be set to the view's UI inside the listener");
+    }
+
+    @Test
+    public void firePortletModeEvent_restoresPreviousUiAfterListener() {
+        Div component = new Div();
+        ui.add(component);
+        PortletViewContext context = new PortletViewContext(
+                component, new AtomicBoolean(true), PortletMode.VIEW,
+                WindowState.NORMAL);
+
+        context.addPortletModeChangeListener(event -> { });
+
+        CurrentInstance.set(UI.class, null);
+        context.firePortletModeEvent(Mockito.mock(PortletModeEvent.class));
+
+        Assertions.assertNull(UI.getCurrent(),
+                "UI.getCurrent() should be restored to its previous value");
+    }
+
+    @Test
+    public void fireWindowStateEvent_uiCurrentIsSetForListener() {
+        Div component = new Div();
+        ui.add(component);
+        PortletViewContext context = new PortletViewContext(
+                component, new AtomicBoolean(true), PortletMode.VIEW,
+                WindowState.NORMAL);
+
+        AtomicReference<UI> uiInsideListener = new AtomicReference<>();
+        context.addWindowStateChangeListener(
+                event -> uiInsideListener.set(UI.getCurrent()));
+
+        CurrentInstance.set(UI.class, null);
+
+        context.fireWindowStateEvent(Mockito.mock(WindowStateEvent.class));
+
+        Assertions.assertSame(ui, uiInsideListener.get(),
+                "UI.getCurrent() should be set to the view's UI inside the listener");
+    }
+
+    @Test
+    public void fireWindowStateEvent_restoresPreviousUiAfterListener() {
+        Div component = new Div();
+        ui.add(component);
+        PortletViewContext context = new PortletViewContext(
+                component, new AtomicBoolean(true), PortletMode.VIEW,
+                WindowState.NORMAL);
+
+        context.addWindowStateChangeListener(event -> { });
+
+        CurrentInstance.set(UI.class, null);
+        context.fireWindowStateEvent(Mockito.mock(WindowStateEvent.class));
+
+        Assertions.assertNull(UI.getCurrent(),
+                "UI.getCurrent() should be restored to its previous value");
+    }
+
     private String assertJsHubRegistration(String event) {
         ui.getInternals().getStateTree().runExecutionsBeforeClientResponse();
 
