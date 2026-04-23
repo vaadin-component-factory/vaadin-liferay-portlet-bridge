@@ -21,17 +21,17 @@ package com.vaadin.flow.portal;
  * #L%
  */
 
-import java.io.Serializable;
-
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.page.ExtendedClientDetails;
+
+import java.io.Serializable;
 
 /**
  * Static utility helpers shared across the portlet bridge.
  * <p>
  * For internal use only.
  */
-final class VaadinPortletUtil implements Serializable {
+public final class VaadinPortletUtil implements Serializable {
 
     private VaadinPortletUtil() {
     }
@@ -47,7 +47,7 @@ final class VaadinPortletUtil implements Serializable {
      *            raw window name value
      * @return normalized window name, never {@code null}
      */
-    static String normalizeWindowName(String windowName) {
+   public static String normalizeWindowName(String windowName) {
         if (windowName == null || "null".equals(windowName)) {
             return "";
         }
@@ -67,12 +67,11 @@ final class VaadinPortletUtil implements Serializable {
      * @return normalized window name, or {@code null} when no client details
      *         are available
      */
-    static String normalizedWindowName(UI ui) {
+    public static String normalizedWindowName(UI ui) {
         if (ui == null) {
             return null;
         }
-        ExtendedClientDetails details = ui.getInternals()
-                .getExtendedClientDetails();
+        final var details = ui.getInternals().getExtendedClientDetails();
         if (details == null) {
             return null;
         }
