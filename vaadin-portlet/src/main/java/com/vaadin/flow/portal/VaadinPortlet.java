@@ -23,6 +23,7 @@ package com.vaadin.flow.portal;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
@@ -55,10 +56,13 @@ import com.vaadin.flow.component.Tag;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.WebComponentExporter;
 import com.vaadin.flow.component.WebComponentExporterFactory;
+import com.vaadin.flow.component.dependency.StyleSheet;
+import com.vaadin.flow.component.page.Page;
 import com.vaadin.flow.component.page.Push;
 import com.vaadin.flow.component.webcomponent.WebComponent;
 import com.vaadin.flow.function.DeploymentConfiguration;
 import com.vaadin.flow.function.SerializableRunnable;
+import com.vaadin.flow.internal.AnnotationReader;
 import com.vaadin.flow.internal.CurrentInstance;
 import com.vaadin.flow.internal.ReflectTools;
 import com.vaadin.flow.portal.lifecycle.PortletEvent;
@@ -188,6 +192,10 @@ public abstract class VaadinPortlet<C extends Component> extends GenericPortlet
                 C component) {
             assert VaadinSession.getCurrent().hasLock();
 
+            // Flow's runtime dependency scan only walks Component subclasses,
+            // so @StyleSheet on an exporter is otherwise ignored.
+            addExporterStyleSheets();
+
             // Pre-register the PortletViewContext synchronously so that it is
             // discoverable from a view's onAttach override. Element attach
             // listeners may run after the component's onAttach.
@@ -198,6 +206,17 @@ public abstract class VaadinPortlet<C extends Component> extends GenericPortlet
                 runnable.run();
             }
             component.getElement().addAttachListener(event -> runnable.run());
+        }
+
+        private void addExporterStyleSheets() {
+            List<StyleSheet> styleSheets = AnnotationReader
+                    .getAnnotationsFor(getClass(), StyleSheet.class);
+            if (styleSheets.isEmpty()) {
+                return;
+            }
+            Page page = UI.getCurrent().getPage();
+            styleSheets.forEach(styleSheet -> page
+                    .addStyleSheet(styleSheet.value(), styleSheet.loadMode()));
         }
 
         @Override

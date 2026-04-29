@@ -41,9 +41,12 @@ import org.mockito.Mockito;
 
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.WebComponentExporter;
+import com.vaadin.flow.component.dependency.StyleSheet;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.internal.PendingJavaScriptInvocation;
 import com.vaadin.flow.component.page.ExtendedClientDetails;
+import com.vaadin.flow.shared.ui.Dependency;
+import com.vaadin.flow.shared.ui.LoadMode;
 import com.vaadin.flow.function.DeploymentConfiguration;
 import com.vaadin.flow.internal.CurrentInstance;
 import com.vaadin.flow.portal.VaadinPortlet.PortletWebComponentExporter;
@@ -116,6 +119,15 @@ public class VaadinPortletTest {
 
     private static class Special$Character extends VaadinPortlet<Div> {
 
+    }
+
+    @StyleSheet("./eager.css")
+    @StyleSheet(value = "./lazy.css", loadMode = LoadMode.LAZY)
+    private static class StyledExporter
+            extends PortletWebComponentExporter<Div> {
+        StyledExporter(String tag) {
+            super(tag);
+        }
     }
 
     private String namespace = "namespace-foo";
@@ -203,6 +215,27 @@ public class VaadinPortletTest {
     public void createExporter_getComponentClass_componentClassIsDetected() {
         Assertions.assertEquals(TestComponent.class,
                 portlet.exporter.getComponentClass());
+    }
+
+    @Test
+    public void configureInstance_styleSheetAnnotationOnExporter_dependenciesRegistered() {
+        StyledExporter exporter = new StyledExporter("styled-portlet");
+        Div div = new Div();
+        ui.add(div);
+
+        exporter.configureInstance(null, div);
+
+        Dependency eager = ui.getInternals().getDependencyList()
+                .getDependencyByUrl("./eager.css", Dependency.Type.STYLESHEET);
+        Assertions.assertNotNull(eager,
+                "@StyleSheet on exporter should register eager dependency");
+        Assertions.assertEquals(LoadMode.EAGER, eager.getLoadMode());
+
+        Dependency lazy = ui.getInternals().getDependencyList()
+                .getDependencyByUrl("./lazy.css", Dependency.Type.STYLESHEET);
+        Assertions.assertNotNull(lazy,
+                "@StyleSheet on exporter should register lazy dependency");
+        Assertions.assertEquals(LoadMode.LAZY, lazy.getLoadMode());
     }
 
     @Test

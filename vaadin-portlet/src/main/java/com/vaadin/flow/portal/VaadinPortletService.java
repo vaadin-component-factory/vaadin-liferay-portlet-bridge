@@ -338,7 +338,10 @@ public class VaadinPortletService extends VaadinService {
     @Override
     public String resolveResource(String url) {
         getLogger().debug(SERVLET_RESOURCES_SERVER_MESSAGE);
-        return null;
+        // Flow callers (e.g. ResourceContentHash) assume non-null and may
+        // dereference the result; the portal serves static resources, so we
+        // pass the URL through unchanged.
+        return url;
     }
 
     @Override
