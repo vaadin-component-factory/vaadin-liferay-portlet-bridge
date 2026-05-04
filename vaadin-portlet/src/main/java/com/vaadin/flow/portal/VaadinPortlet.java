@@ -192,16 +192,18 @@ public abstract class VaadinPortlet<C extends Component> extends GenericPortlet
                 C component) {
             assert VaadinSession.getCurrent().hasLock();
 
-            // Flow's runtime dependency scan only walks Component subclasses,
-            // so @StyleSheet on an exporter is otherwise ignored.
-            addExporterStyleSheets();
-
             // Pre-register the PortletViewContext synchronously so that it is
             // discoverable from a view's onAttach override. Element attach
             // listeners may run after the component's onAttach.
             preRegisterViewContext(component);
 
-            SerializableRunnable runnable = () -> initComponent(component);
+            // Re-register on every attach so stylesheets reach the new UI's
+            // DependencyList on @PreserveOnRefresh reloads (configureInstance
+            // is bypassed when the cached element is reattached).
+            SerializableRunnable runnable = () -> {
+                addExporterStyleSheets();
+                initComponent(component);
+            };
             if (component.getElement().getNode().isAttached()) {
                 runnable.run();
             }

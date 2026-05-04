@@ -239,6 +239,37 @@ public class VaadinPortletTest {
     }
 
     @Test
+    public void configureInstance_reattachToNewUI_styleSheetsRegisteredOnNewUI() {
+        // Simulates @PreserveOnRefresh: configureInstance runs once on the
+        // original UI; on refresh the cached element is reattached to a fresh
+        // WebComponentUI and configureInstance is bypassed. The attach listener
+        // is what carries the stylesheet registration to the new UI.
+        StyledExporter exporter = new StyledExporter("styled-portlet");
+        Div div = new Div();
+        ui.add(div);
+        exporter.configureInstance(null, div);
+
+        div.getElement().removeFromTree(false);
+        UI refreshedUi = new UI() {
+            @Override
+            public VaadinSession getSession() {
+                return session;
+            }
+        };
+        UI.setCurrent(refreshedUi);
+        refreshedUi.add(div);
+
+        Dependency eager = refreshedUi.getInternals().getDependencyList()
+                .getDependencyByUrl("./eager.css", Dependency.Type.STYLESHEET);
+        Assertions.assertNotNull(eager,
+                "stylesheets should be re-registered on the refreshed UI");
+        Dependency lazy = refreshedUi.getInternals().getDependencyList()
+                .getDependencyByUrl("./lazy.css", Dependency.Type.STYLESHEET);
+        Assertions.assertNotNull(lazy,
+                "stylesheets should be re-registered on the refreshed UI");
+    }
+
+    @Test
     @SuppressWarnings("rawtypes")
     public void createExporter_exporterIsNotExtended_componentClassIsDetected() {
         TestMYPortlet portlet = new TestMYPortlet();
