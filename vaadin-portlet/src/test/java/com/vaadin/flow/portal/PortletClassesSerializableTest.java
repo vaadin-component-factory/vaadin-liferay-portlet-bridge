@@ -15,8 +15,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.Tag;
@@ -71,14 +71,14 @@ public class PortletClassesSerializableTest extends ClassesSerializableTest {
         PortletViewContext deserialized = serializeAndDeserialize(
                 original);
 
-        Assert.assertEquals(portletMode, deserialized.getPortletMode());
-        Assert.assertEquals(windowState, deserialized.getWindowState());
+        Assertions.assertEquals(portletMode, deserialized.getPortletMode());
+        Assertions.assertEquals(windowState, deserialized.getWindowState());
 
         // assert that view component has been deserialized and listener is
         // registered
         deserialized.fireWindowStateEvent(new WindowStateEvent(
                 WindowState.MAXIMIZED, WindowState.MINIMIZED, false));
-        Assert.assertEquals(1, ComponentParameter.integer.get());
+        Assertions.assertEquals(1, ComponentParameter.integer.get());
     }
 
     @Tag("component-parameter")

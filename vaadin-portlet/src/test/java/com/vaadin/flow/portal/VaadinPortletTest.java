@@ -33,17 +33,20 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 import net.jcip.annotations.NotThreadSafe;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.WebComponentExporter;
+import com.vaadin.flow.component.dependency.StyleSheet;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.internal.PendingJavaScriptInvocation;
 import com.vaadin.flow.component.page.ExtendedClientDetails;
+import com.vaadin.flow.shared.ui.Dependency;
+import com.vaadin.flow.shared.ui.LoadMode;
 import com.vaadin.flow.function.DeploymentConfiguration;
 import com.vaadin.flow.internal.CurrentInstance;
 import com.vaadin.flow.portal.VaadinPortlet.PortletWebComponentExporter;
@@ -61,8 +64,8 @@ public class VaadinPortletTest {
 
     private class TestVaadinPortlet extends VaadinPortlet<TestComponent> {
 
-        private class TestWebComponentExporter
-                extends PortletWebComponentExporter {
+        private static class TestWebComponentExporter
+                extends PortletWebComponentExporter<TestComponent> {
 
             private TestWebComponentExporter(String tag) {
                 super(tag);
@@ -118,6 +121,15 @@ public class VaadinPortletTest {
 
     }
 
+    @StyleSheet("./eager.css")
+    @StyleSheet(value = "./lazy.css", loadMode = LoadMode.LAZY)
+    private static class StyledExporter
+            extends PortletWebComponentExporter<Div> {
+        StyledExporter(String tag) {
+            super(tag);
+        }
+    }
+
     private String namespace = "namespace-foo";
 
     private TestVaadinPortlet portlet;
@@ -126,7 +138,7 @@ public class VaadinPortletTest {
     private VaadinPortletSession session;
     private UI ui;
 
-    @Before
+    @BeforeEach
     public void setUp() throws SessionExpiredException {
         portlet = new TestVaadinPortlet();
         service = Mockito.mock(VaadinPortletService.class);
@@ -194,15 +206,67 @@ public class VaadinPortletTest {
         portlet.exporter.configureInstance(null, component);
     }
 
-    @After
+    @AfterEach
     public void tearDown() {
         CurrentInstance.clearAll();
     }
 
     @Test
     public void createExporter_getComponentClass_componentClassIsDetected() {
-        Assert.assertEquals(TestComponent.class,
+        Assertions.assertEquals(TestComponent.class,
                 portlet.exporter.getComponentClass());
+    }
+
+    @Test
+    public void configureInstance_styleSheetAnnotationOnExporter_dependenciesRegistered() {
+        StyledExporter exporter = new StyledExporter("styled-portlet");
+        Div div = new Div();
+        ui.add(div);
+
+        exporter.configureInstance(null, div);
+
+        Dependency eager = ui.getInternals().getDependencyList()
+                .getDependencyByUrl("./eager.css", Dependency.Type.STYLESHEET);
+        Assertions.assertNotNull(eager,
+                "@StyleSheet on exporter should register eager dependency");
+        Assertions.assertEquals(LoadMode.EAGER, eager.getLoadMode());
+
+        Dependency lazy = ui.getInternals().getDependencyList()
+                .getDependencyByUrl("./lazy.css", Dependency.Type.STYLESHEET);
+        Assertions.assertNotNull(lazy,
+                "@StyleSheet on exporter should register lazy dependency");
+        Assertions.assertEquals(LoadMode.LAZY, lazy.getLoadMode());
+    }
+
+    @Test
+    public void configureInstance_reattachToNewUI_styleSheetsRegisteredOnNewUI() {
+        // Simulates @PreserveOnRefresh: configureInstance runs once on the
+        // original UI; on refresh the cached element is reattached to a fresh
+        // WebComponentUI and configureInstance is bypassed. The attach listener
+        // is what carries the stylesheet registration to the new UI.
+        StyledExporter exporter = new StyledExporter("styled-portlet");
+        Div div = new Div();
+        ui.add(div);
+        exporter.configureInstance(null, div);
+
+        div.getElement().removeFromTree(false);
+        UI refreshedUi = new UI() {
+            @Override
+            public VaadinSession getSession() {
+                return session;
+            }
+        };
+        UI.setCurrent(refreshedUi);
+        refreshedUi.add(div);
+
+        Dependency eager = refreshedUi.getInternals().getDependencyList()
+                .getDependencyByUrl("./eager.css", Dependency.Type.STYLESHEET);
+        Assertions.assertNotNull(eager,
+                "stylesheets should be re-registered on the refreshed UI");
+        Dependency lazy = refreshedUi.getInternals().getDependencyList()
+                .getDependencyByUrl("./lazy.css", Dependency.Type.STYLESHEET);
+        Assertions.assertNotNull(lazy,
+                "stylesheets should be re-registered on the refreshed UI");
     }
 
     @Test
@@ -212,22 +276,22 @@ public class VaadinPortletTest {
 
         PortletWebComponentExporter exporter = (PortletWebComponentExporter) portlet
                 .create();
-        Assert.assertEquals(Div.class, exporter.getComponentClass());
+        Assertions.assertEquals(Div.class, exporter.getComponentClass());
     }
 
     @Test
     public void addWindowStateListener_stateIsChanged_listenerIsCalled()
             throws PortletException, IOException {
-        Assert.assertNotNull(component.context);
+        Assertions.assertNotNull(component.context);
 
         AtomicReference<WindowStateEvent> listener = new AtomicReference<>();
         component.context.addWindowStateChangeListener(
-                event -> Assert.assertNull(listener.getAndSet(event)));
+                event -> Assertions.assertNull(listener.getAndSet(event)));
 
         requestModeAndState("foo", "bar");
 
-        Assert.assertNotNull(listener.get());
-        Assert.assertEquals("bar", listener.get().getWindowState().toString());
+        Assertions.assertNotNull(listener.get());
+        Assertions.assertEquals("bar", listener.get().getWindowState().toString());
     }
 
     @Test
@@ -236,7 +300,7 @@ public class VaadinPortletTest {
         AtomicReference<WindowStateEvent> listener = new AtomicReference<>();
         Registration registration = component.context
                 .addWindowStateChangeListener(
-                        event -> Assert.assertNull(listener.getAndSet(event)));
+                        event -> Assertions.assertNull(listener.getAndSet(event)));
 
         requestModeAndState("foo", "bar");
 
@@ -246,33 +310,33 @@ public class VaadinPortletTest {
 
         requestModeAndState("foo", "baz");
 
-        Assert.assertNull(listener.get());
+        Assertions.assertNull(listener.get());
     }
 
     @Test
     public void addPortletModeListener_modeIsChanged_listenerIsCalled()
             throws PortletException, IOException {
-        Assert.assertNotNull(component.context);
+        Assertions.assertNotNull(component.context);
 
         AtomicReference<PortletModeEvent> listener = new AtomicReference<>();
         component.context.addPortletModeChangeListener(
-                event -> Assert.assertNull(listener.getAndSet(event)));
+                event -> Assertions.assertNull(listener.getAndSet(event)));
 
         requestModeAndState("foo", "bar");
 
-        Assert.assertNotNull(listener.get());
-        Assert.assertEquals("foo", listener.get().getPortletMode().toString());
+        Assertions.assertNotNull(listener.get());
+        Assertions.assertEquals("foo", listener.get().getPortletMode().toString());
     }
 
     @Test
     public void addPortletModeListener_unregister_listenerIsNotCalled()
             throws PortletException, IOException {
-        Assert.assertNotNull(component.context);
+        Assertions.assertNotNull(component.context);
 
         AtomicReference<PortletModeEvent> listener = new AtomicReference<>();
         Registration registration = component.context
                 .addPortletModeChangeListener(
-                        event -> Assert.assertNull(listener.getAndSet(event)));
+                        event -> Assertions.assertNull(listener.getAndSet(event)));
 
         requestModeAndState("foo", "bar");
 
@@ -282,22 +346,22 @@ public class VaadinPortletTest {
 
         requestModeAndState("baz", "bar");
 
-        Assert.assertNull(listener.get());
+        Assertions.assertNull(listener.get());
     }
 
     @Test
     public void configure_onPortletViewContextInitIsCalledOnce_listenersAreNotCalledTwice()
             throws PortletException, IOException {
-        Assert.assertEquals(1, component.initCounts);
+        Assertions.assertEquals(1, component.initCounts);
 
         AtomicReference<PortletModeEvent> listener = new AtomicReference<>();
         component.context.addPortletModeChangeListener(
-                event -> Assert.assertNull(listener.getAndSet(event)));
+                event -> Assertions.assertNull(listener.getAndSet(event)));
 
         // re-attach
         requestModeAndState("foo", "bar");
 
-        Assert.assertEquals(1, component.initCounts);
+        Assertions.assertEquals(1, component.initCounts);
 
         listener.set(null);
         // fire an event one more time, listener should not throw ( should not
@@ -374,23 +438,23 @@ public class VaadinPortletTest {
         devModeErrorMessageField.setAccessible(true);
         String expectedDevModeErrorMessage = (String) devModeErrorMessageField
                 .get(null);
-        Assert.assertEquals(
-                "When dev server is enabled, DEV_MODE_ERROR_MESSAGE should be shown in the portlet.",
-                expectedDevModeErrorMessage, stringWriter.toString().trim());
+        Assertions.assertEquals(expectedDevModeErrorMessage,
+                stringWriter.toString().trim(),
+                "When dev server is enabled, DEV_MODE_ERROR_MESSAGE should be shown in the portlet.");
     }
 
     @Test
     public void getTag_tagNameDoNoContainUpperCaseLetters() {
         TestMYPortlet portlet = new TestMYPortlet();
         String tag = portlet.getPortletTag();
-        Assert.assertFalse(tag.chars().anyMatch(Character::isUpperCase));
+        Assertions.assertFalse(tag.chars().anyMatch(Character::isUpperCase));
     }
 
     @Test
     public void getTag_sameSimpleClassNamesDoNotCollide() {
         TestMYPortlet portlet = new TestMYPortlet();
         String tag = portlet.getPortletTag();
-        Assert.assertNotEquals(tag,
+        Assertions.assertNotEquals(tag,
                 new Wrapper.TestMYPortlet().getPortletTag());
     }
 
@@ -398,8 +462,8 @@ public class VaadinPortletTest {
     public void getTag_tagNameDoNoContainUpperCaseLettersAndDollarSign() {
         Special$Character portlet = new Special$Character();
         String tag = portlet.getPortletTag();
-        Assert.assertFalse(tag.chars().anyMatch(Character::isUpperCase));
-        Assert.assertFalse(tag.chars().anyMatch(ch -> ch == '$'));
+        Assertions.assertFalse(tag.chars().anyMatch(Character::isUpperCase));
+        Assertions.assertFalse(tag.chars().anyMatch(ch -> ch == '$'));
     }
 
     @Test
@@ -431,7 +495,7 @@ public class VaadinPortletTest {
 
         AtomicReference<PortletEvent> listener = new AtomicReference<>();
         context.addEventChangeListener("foo",
-                event -> Assert.assertNull(listener.getAndSet(event)));
+                event -> Assertions.assertNull(listener.getAndSet(event)));
         ui.getInternals().setSession(session);
 
         ActionParameters params = Mockito.mock(ActionParameters.class);
@@ -465,7 +529,7 @@ public class VaadinPortletTest {
         Mockito.when(params.getValue("vaadin.wn")).thenReturn("bar");
         portlet.processAction(request, response);
 
-        Assert.assertNotNull(listener.get());
+        Assertions.assertNotNull(listener.get());
     }
 
     @Test
@@ -475,10 +539,10 @@ public class VaadinPortletTest {
                 + "mywindow-viewContext";
         Map<String, Object> map = (Map<String, Object>) session
                 .getAttribute(attributeName);
-        Assert.assertNotNull(map);
-        Assert.assertTrue(map.containsKey(namespace));
+        Assertions.assertNotNull(map);
+        Assertions.assertTrue(map.containsKey(namespace));
         PortletViewContext context = (PortletViewContext) map.get(namespace);
-        Assert.assertEquals(component.context, context);
+        Assertions.assertEquals(component.context, context);
     }
 
     private String getListenerUid() {

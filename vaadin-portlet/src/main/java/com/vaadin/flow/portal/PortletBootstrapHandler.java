@@ -8,6 +8,19 @@
  */
 package com.vaadin.flow.portal;
 
+/*-
+ * #%L
+ * Vaadin Liferay Portlet Bridge
+ * %%
+ * Copyright (C) 2026 Vaadin Ltd
+ * %%
+ * This program is available under Vaadin Commercial License and Service Terms.
+ * 
+ * See {@literal <https://vaadin.com/commercial-license-and-service-terms>} for the full
+ * license.
+ * #L%
+ */
+
 import jakarta.portlet.PortletContext;
 import jakarta.portlet.PortletResponse;
 import jakarta.portlet.RenderRequest;
@@ -18,6 +31,8 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Collections;
 import java.util.stream.Collectors;
+
+import org.slf4j.LoggerFactory;
 
 import com.vaadin.flow.function.DeploymentConfiguration;
 import com.vaadin.flow.server.SynchronizedRequestHandler;
@@ -111,6 +126,8 @@ class PortletBootstrapHandler extends SynchronizedRequestHandler {
             writer.write("<" + tag + " data-portlet-id='" + namespace
                     + "' style='width: 100%;'></" + tag + ">");
         } catch (Exception exception) {
+            LoggerFactory.getLogger(PortletBootstrapHandler.class)
+                    .error("Portlet bootstrap failed", exception);
             String message = exception.getMessage();
             writer.write("<div style='color:red;'>" + message + "</div>");
         }

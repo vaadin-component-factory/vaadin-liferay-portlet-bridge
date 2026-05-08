@@ -14,8 +14,8 @@ import jakarta.portlet.PortletRequest;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 import com.vaadin.flow.server.StreamResource;
@@ -26,7 +26,7 @@ public class PortletStreamResourceHandlerTest {
     private VaadinPortletSession session;
     private VaadinPortletService service;
 
-    @Before
+    @BeforeEach
     public void init() {
         service = Mockito.mock(VaadinPortletService.class);
         session = new VaadinPortletSession(service) {

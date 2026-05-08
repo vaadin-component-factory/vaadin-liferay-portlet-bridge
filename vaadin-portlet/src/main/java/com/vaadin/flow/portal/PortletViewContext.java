@@ -8,7 +8,21 @@
  */
 package com.vaadin.flow.portal;
 
+/*-
+ * #%L
+ * Vaadin Liferay Portlet Bridge
+ * %%
+ * Copyright (C) 2026 Vaadin Ltd
+ * %%
+ * This program is available under Vaadin Commercial License and Service Terms.
+ * 
+ * See {@literal <https://vaadin.com/commercial-license-and-service-terms>} for the full
+ * license.
+ * #L%
+ */
+
 import com.vaadin.flow.component.Component;
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.internal.Pair;
 import com.vaadin.flow.portal.lifecycle.*;
 import com.vaadin.flow.shared.Registration;
@@ -58,6 +72,12 @@ public final class PortletViewContext implements Serializable {
 
     private String cachedNamespace;
 
+    // True once VaadinPortlet has invoked PortletView#onPortletViewContextInit
+    // for this context. Used to avoid double-firing when the context is
+    // registered before the component is attached and completed later from
+    // an attach listener.
+    private boolean viewInitialized;
+
     PortletViewContext(Component view, AtomicBoolean portlet3,
                        PortletMode portletMode, WindowState windowState) {
 
@@ -78,6 +98,14 @@ public final class PortletViewContext implements Serializable {
             doAddPortletModeChangeListener(
                     ((PortletModeHandler) view)::portletModeChange);
         }
+    }
+
+    boolean isViewInitialized() {
+        return viewInitialized;
+    }
+
+    void setViewInitialized(boolean viewInitialized) {
+        this.viewInitialized = viewInitialized;
     }
 
     /**
@@ -265,8 +293,8 @@ public final class PortletViewContext implements Serializable {
      *            a window state change event.
      */
     void fireWindowStateEvent(WindowStateEvent event) {
-        windowStateListeners
-                .forEach(listener -> listener.windowStateChange(event));
+        dispatchWithCurrentUi(() -> windowStateListeners
+                .forEach(listener -> listener.windowStateChange(event)));
     }
 
     /**
@@ -276,8 +304,30 @@ public final class PortletViewContext implements Serializable {
      *            a portlet mode change event
      */
     void firePortletModeEvent(PortletModeEvent event) {
-        portletModeListeners
-                .forEach(listener -> listener.portletModeChange(event));
+        dispatchWithCurrentUi(() -> portletModeListeners
+                .forEach(listener -> listener.portletModeChange(event)));
+    }
+
+    /**
+     * Runs {@code dispatch} with {@link UI#getCurrent()} set to the UI the
+     * view is attached to, restoring the previous value afterwards. Makes
+     * {@code UI.getCurrent()} usable from mode/state listener code even when
+     * the firing path is invoked outside a request scope that has already
+     * populated the thread-local.
+     */
+    private void dispatchWithCurrentUi(Runnable dispatch) {
+        UI viewUi = view != null ? view.getUI().orElse(null) : null;
+        if (viewUi == null) {
+            dispatch.run();
+            return;
+        }
+        UI previous = UI.getCurrent();
+        UI.setCurrent(viewUi);
+        try {
+            dispatch.run();
+        } finally {
+            UI.setCurrent(previous);
+        }
     }
 
     /**

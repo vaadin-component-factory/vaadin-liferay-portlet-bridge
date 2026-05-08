@@ -8,27 +8,24 @@
  */
 package com.vaadin.flow.portal;
 
-import jakarta.portlet.PortletRequest;
-import jakarta.portlet.PortletResponse;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
-import java.util.Objects;
-import java.util.Optional;
-
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+/*-
+ * #%L
+ * Vaadin Liferay Portlet Bridge
+ * %%
+ * Copyright (C) 2026 Vaadin Ltd
+ * %%
+ * This program is available under Vaadin Commercial License and Service Terms.
+ * 
+ * See {@literal <https://vaadin.com/commercial-license-and-service-terms>} for the full
+ * license.
+ * #L%
+ */
 
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.function.DeploymentConfiguration;
 import com.vaadin.flow.internal.DevModeHandler;
 import com.vaadin.flow.internal.DevModeHandlerManager;
+import com.vaadin.flow.internal.FrontendUtils;
 import com.vaadin.flow.server.BootstrapHandler;
 import com.vaadin.flow.server.Mode;
 import com.vaadin.flow.server.VaadinRequest;
@@ -36,11 +33,23 @@ import com.vaadin.flow.server.VaadinResponse;
 import com.vaadin.flow.server.VaadinService;
 import com.vaadin.flow.server.VaadinSession;
 import com.vaadin.flow.server.communication.WebComponentBootstrapHandler;
-import com.vaadin.flow.server.frontend.FrontendUtils;
 import com.vaadin.pro.licensechecker.BuildType;
 import com.vaadin.pro.licensechecker.LicenseChecker;
-
+import jakarta.portlet.PortletRequest;
+import jakarta.portlet.PortletResponse;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import tools.jackson.databind.node.ObjectNode;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.util.Objects;
 
 /**
  * For internal use only.
@@ -80,27 +89,20 @@ class PortletWebComponentBootstrapHandler
         // Require that the static files are available from the server root
         path = path.replaceFirst("^.VAADIN/", "./VAADIN/");
         if (path.startsWith("./VAADIN/") || isStaticResource(path)) {
-            VaadinService vaadinService = VaadinPortletService.getCurrent();
-            DeploymentConfiguration deploymentConfiguration =
-                    vaadinService.getDeploymentConfiguration();
-            Optional<DevModeHandler> devModeHandler =
-                    DevModeHandlerManager.getDevModeHandler(vaadinService);
+            final var vaadinService = VaadinPortletService.getCurrent();
+            final var deploymentConfiguration = vaadinService.getDeploymentConfiguration();
+            final var devModeHandler = DevModeHandlerManager.getDevModeHandler(vaadinService);
             if (deploymentConfiguration.isProductionMode()) {
-                // In production mode serve static files from the
-                // dedicated URI
-                String prefix =
-                        getStaticResourcesMappingURI(deploymentConfiguration);
+                // In production mode serve static files from the dedicated URI
+                final var prefix = getStaticResourcesMappingURI(deploymentConfiguration);
                 if (!path.startsWith("./")) {
-                    // Theme resources like lumo/lumo.css need the
-                    // prefix but don't start with ./
+                    // Theme resources like lumo/lumo.css need the prefix but don't start with ./
                     return prefix + "./" + path;
                 }
                 return prefix + path;
-            } else if (devModeHandler.isPresent() && checkDevServerConnection(
-                    devModeHandler.get())) {
+            } else if (devModeHandler.isPresent() && checkDevServerConnection(devModeHandler.get())) {
                 // With dev server running request directly from dev server
-                return String.format("http://localhost:%s/%s",
-                        devModeHandler.get().getPort(), path);
+                return String.format("http://localhost:%s/%s", devModeHandler.get().getPort(), path);
             }
             return "/" + path;
         }
