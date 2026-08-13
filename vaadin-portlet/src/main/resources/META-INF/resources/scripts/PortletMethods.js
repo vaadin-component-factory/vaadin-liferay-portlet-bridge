@@ -14,14 +14,30 @@ if (typeof global === 'undefined') {
 }
 globalThis.Vaadin = globalThis.Vaadin || {};
 globalThis.Vaadin.Flow = globalThis.Vaadin.Flow || {};
+
+// Liferay DXP's portlet hub may add non-writable, non-configurable properties (e.g. toJsonURLText)
+// to Object.prototype. This breaks Polymer/LitElement which assigns to plain {} objects that inherit
+// these read-only properties. Since they are non-configurable, we cannot fix them directly.
+// Instead, we patch Object.getOwnPropertyNames to hide these properties when enumerating
+// Object.prototype, so Polymer's prototype-chain walk does not encounter them.
+(function() {
+    var _origGetOwnPropertyNames = Object.getOwnPropertyNames;
+    Object.getOwnPropertyNames = function(obj) {
+        var names = _origGetOwnPropertyNames.call(Object, obj);
+        if (obj === Object.prototype) {
+            return names.filter(function(n) {
+                var d = Object.getOwnPropertyDescriptor(obj, n);
+                return !d || d.writable !== false || d.configurable !== false;
+            });
+        }
+        return names;
+    };
+})();
 // <liferay>
-// 7.2.1-ga2 should create and populate these for us.
-// Forcing object generation for hub registration later on.
+// Let Liferay create and populate portlet.data.pageRenderState.
+// Pre-creating it causes stale reference issues with Liferay's PortletHub module.
 globalThis.portlet = globalThis.portlet || {};
 globalThis.portlet.data = globalThis.portlet.data || {};
-globalThis.portlet.data.pageRenderState = globalThis.portlet.data.pageRenderState || {};
-globalThis.portlet.data.pageRenderState.portlets = globalThis.portlet.data.pageRenderState.portlets ||{};
-globalThis.portlet.data.pageRenderState.encodedCurrentURL = globalThis.portlet.data.pageRenderState.encodedCurrentURL || encodeURIComponent(globalThis.location.origin);
 // </liferay>
 
 if (!globalThis.Vaadin.Flow.Portlets) {
@@ -76,7 +92,10 @@ if (!globalThis.Vaadin.Flow.Portlets) {
             let params = hub.newParameters();
             Object.getOwnPropertyNames(parameters).forEach(
                 function (prop) {
-                    params[prop] = parameters[prop];
+                    var descriptor = Object.getOwnPropertyDescriptor(params, prop);
+                    if (!descriptor || descriptor.writable !== false) {
+                        params[prop] = parameters[prop];
+                    }
                 });
 
             hub.dispatchClientEvent(event, params);
@@ -90,32 +109,55 @@ if (!globalThis.Vaadin.Flow.Portlets) {
     globalThis.Vaadin.Flow.Portlets.registerElement = function (tag, portletRegistryName, windowStates, portletModes, actionUrl) {
         // <liferay>
         // Force objects, urls and arrays for liferay portlet data to enable hub registration and hub usage
-        // IMPORTANT: Liferay's <aui:script> may replace the entire pageRenderState object after this runs,
-        // so we store a backup copy in _liferayData and re-inject before portlet.register() is called.
+        // Store portlet data in _liferayData backup and write to pageRenderState if available.
+        // pageRenderState may not exist yet (Liferay creates it later via <aui:script>),
+        // so the backup is the primary store — doHubRegistration will inject it later.
+        const portletData = {
+            allowedPM: portletModes,
+            allowedWS: windowStates,
+            encodedActionURL: encodeURIComponent(actionUrl),
+            renderData: { content: null, mimeType: "text/html" },
+            state: {
+                parameters: {},
+                portletMode: portletModes && portletModes.length > 0 ? portletModes[0] : 'view',
+                windowState: windowStates && windowStates.length > 0 ? windowStates[0] : 'normal'
+            }
+        };
+
+        // Store backup copy that Liferay won't touch
+        globalThis.Vaadin.Flow.Portlets._liferayData[portletRegistryName] = portletData;
+
+        // Write to pageRenderState if Liferay has already created it
         try {
-            const portletData = {
-                allowedPM: portletModes,
-                allowedWS: windowStates,
-                encodedActionURL: encodeURIComponent(actionUrl),
-                renderData: { content: null, mimeType: "text/html" },
-                state: {
-                    parameters: {},
-                    portletMode: portletModes && portletModes.length > 0 ? portletModes[0] : 'view',
-                    windowState: windowStates && windowStates.length > 0 ? windowStates[0] : 'normal'
+            var prs = globalThis.portlet.data.pageRenderState;
+            if (prs && prs.portlets) {
+                if (!prs.portlets[portletRegistryName]) {
+                    prs.portlets[portletRegistryName] = portletData;
+                } else {
+                    Object.assign(prs.portlets[portletRegistryName], portletData);
+                }
+            }
+        } catch (e) { /* pageRenderState not ready yet — doHubRegistration will handle it */ }
+        // </liferay>
+
+        // Set up a queueing registerListener early so that Vaadin UIDL
+        // requests (which may arrive before the PortletHub is registered)
+        // can queue event listeners. initListenerRegistration will replace
+        // this with the full version once the hub is ready.
+        globalThis.Vaadin.Flow.Portlets[portletRegistryName] = globalThis.Vaadin.Flow.Portlets[portletRegistryName] || {};
+        var earlyObj = globalThis.Vaadin.Flow.Portlets[portletRegistryName];
+        if (!earlyObj.registerListener) {
+            earlyObj.registerListener = function(eventType, uid) {
+                earlyObj.listeners = earlyObj.listeners || {};
+                earlyObj.listeners[uid] = eventType;
+            };
+            earlyObj.unregisterListener = function(uid) {
+                if (earlyObj.listeners) {
+                    delete earlyObj.listeners[uid];
                 }
             };
-
-            // Store backup copy that Liferay won't touch
-            globalThis.Vaadin.Flow.Portlets._liferayData[portletRegistryName] = portletData;
-
-            // Also write to pageRenderState (may be overwritten by Liferay later)
-            globalThis.portlet.data.pageRenderState.portlets[portletRegistryName] =
-                globalThis.portlet.data.pageRenderState.portlets[portletRegistryName] || {};
-            Object.assign(globalThis.portlet.data.pageRenderState.portlets[portletRegistryName], portletData);
-        } catch (e) {
-            console.warn('Vaadin Portlet: Could not initialize Liferay pageRenderState for ' + portletRegistryName, e);
         }
-        // </liferay>
+
         customElements.whenDefined(tag).then(function () {
             let elem = document.querySelector(tag + "[data-portlet-id='" + portletRegistryName + "']");
             if (!elem) {
@@ -165,14 +207,14 @@ if (!globalThis.Vaadin.Flow.Portlets) {
             if (!portletObj.hub) {
                 if (typeof portlet !== 'undefined' && portlet && typeof portlet.register === 'function') {
                     // <liferay>
-                    // Re-inject Vaadin portlet data if Liferay's <aui:script> replaced pageRenderState
-                    // This happens when Liferay fires its deferred scripts between registerElement and now
+                    // Inject Vaadin portlet data into Liferay's pageRenderState before registering.
+                    // By this point Liferay has created pageRenderState — we write directly to it
+                    // so the PortletHub module sees our data through its own reference.
                     try {
-                        let liferayData = globalThis.Vaadin.Flow.Portlets._liferayData;
+                        var liferayData = globalThis.Vaadin.Flow.Portlets._liferayData;
                         if (liferayData && liferayData[portletRegistryName]) {
-                            let portlets = globalThis.portlet.data.pageRenderState.portlets;
-                            if (!portlets[portletRegistryName]) {
-                                // Data was wiped by Liferay, re-inject from backup
+                            var portlets = globalThis.portlet.data.pageRenderState.portlets;
+                            if (!portlets[portletRegistryName] || !portlets[portletRegistryName].allowedPM) {
                                 portlets[portletRegistryName] = liferayData[portletRegistryName];
                             }
                         }
@@ -260,7 +302,10 @@ if (!globalThis.Vaadin.Flow.Portlets) {
             if (payload) {
                 Object.getOwnPropertyNames(payload).forEach(
                     function (prop) {
-                        params[prop] = payload[prop];
+                        var descriptor = Object.getOwnPropertyDescriptor(params, prop);
+                        if (!descriptor || descriptor.writable !== false) {
+                            params[prop] = payload[prop];
+                        }
                     });
             }
             hub.action(params).then(function () {
