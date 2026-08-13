@@ -756,8 +756,22 @@ public abstract class VaadinPortlet<C extends Component> extends GenericPortlet
                 "Unable to initialize component, UI instance not available from "
                         + component.getClass().getName()));
 
-        final String namespace = VaadinPortletResponse.getCurrentPortletResponse()
-                .getNamespace();
+        // A preserved component is reattached on every render, but an attach
+        // can also happen with no portlet request in scope, e.g. when the
+        // component is moved between UIs programmatically. There is no
+        // namespace to key the view context on then, so leave the existing one
+        // alone rather than fail the attach -- as preRegisterViewContext does.
+        final PortletResponse portletResponse = VaadinPortletResponse
+                .getCurrentPortletResponse();
+        if (portletResponse == null) {
+            LoggerFactory.getLogger(VaadinPortlet.class).debug(
+                    "initComponent: no portlet response in scope, skipping "
+                            + "view context initialization for {}",
+                    component.getClass().getName());
+            return;
+        }
+
+        final String namespace = portletResponse.getNamespace();
         final String rawWindowName = VaadinPortletUtil.rawWindowName(ui);
         final String windowName = VaadinPortletUtil.windowNameOrFallback(ui,
                 namespace);

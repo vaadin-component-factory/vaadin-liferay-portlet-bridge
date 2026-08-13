@@ -546,6 +546,17 @@ public class VaadinPortletTest {
     }
 
     @Test
+    public void initComponent_noCurrentPortletResponse_attachDoesNotFail() {
+        // Without a response there is no namespace, so the view context
+        // cannot be keyed; the attach must still go through.
+        CurrentInstance.set(VaadinResponse.class, null);
+        CurrentInstance.set(VaadinRequest.class, null);
+
+        Assertions.assertDoesNotThrow(
+                () -> VaadinPortlet.initComponent(component));
+    }
+
+    @Test
     public void initComponent_noCurrentPortletRequest_modeAndStateFallBackToDefaults() {
         // A preserved component can be reattached with no portlet request in
         // scope; that must not fail the attach.
