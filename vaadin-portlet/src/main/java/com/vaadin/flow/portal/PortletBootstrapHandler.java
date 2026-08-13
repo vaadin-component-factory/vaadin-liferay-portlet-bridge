@@ -123,8 +123,14 @@ class PortletBootstrapHandler extends SynchronizedRequestHandler {
                     scriptUrl, registrationInstruction);
 
             writer.printf("<script>%s</script>", initScript);
-            writer.write("<" + tag + " data-portlet-id='" + namespace
-                    + "' style='width: 100%;'></" + tag + ">");
+            // The id is what Flow uses to identify a @PreserveOnRefresh web
+            // component across renders. Left unset, Flow falls back to a
+            // counter that restarts on every page load, so two instances of
+            // the same portlet on a page can trade places -- and their
+            // preserved state with it -- if they happen to register in a
+            // different order. The namespace is stable per portlet instance.
+            writer.write("<" + tag + " id='" + namespace + "' data-portlet-id='"
+                    + namespace + "' style='width: 100%;'></" + tag + ">");
         } catch (Exception exception) {
             LoggerFactory.getLogger(PortletBootstrapHandler.class)
                     .error("Portlet bootstrap failed", exception);

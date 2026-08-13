@@ -545,6 +545,28 @@ public class VaadinPortletTest {
         Assertions.assertEquals(component.context, context);
     }
 
+    @Test
+    public void initComponent_clientReportsNoWindowName_viewContextIsKeyedByNamespace() {
+        ExtendedClientDetails noWindowName = Mockito
+                .mock(ExtendedClientDetails.class);
+        Mockito.when(noWindowName.getWindowName()).thenReturn(null);
+        ui.getInternals().setExtendedClientDetails(noWindowName);
+
+        VaadinPortlet.initComponent(component);
+
+        Assertions.assertNull(
+                session.getAttribute(
+                        TestVaadinPortlet.class.getName() + "--viewContext"),
+                "A blank window name is shared by every browser tab and must "
+                        + "not be used as a key");
+
+        Map<String, Object> map = (Map<String, Object>) session.getAttribute(
+                TestVaadinPortlet.class.getName() + "-" + namespace
+                        + "-viewContext");
+        Assertions.assertNotNull(map);
+        Assertions.assertTrue(map.containsKey(namespace));
+    }
+
     private String getListenerUid() {
         ui.getInternals().getStateTree().runExecutionsBeforeClientResponse();
 

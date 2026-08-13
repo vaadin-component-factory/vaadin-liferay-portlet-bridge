@@ -758,17 +758,9 @@ public abstract class VaadinPortlet<C extends Component> extends GenericPortlet
 
         final String namespace = VaadinPortletResponse.getCurrentPortletResponse()
                 .getNamespace();
-        final String rawWindowName;
-        final String windowName;
-        if (ui.getInternals().getExtendedClientDetails() != null) {
-            rawWindowName = ui.getInternals().getExtendedClientDetails().getWindowName();
-            windowName = VaadinPortletUtil.normalizeWindowName(rawWindowName);
-        } else {
-            // Without @PreserveOnRefresh, extended client details may not
-            // be available yet. Use the namespace as a stable fallback.
-            rawWindowName = null;
-            windowName = namespace;
-        }
+        final String rawWindowName = VaadinPortletUtil.rawWindowName(ui);
+        final String windowName = VaadinPortletUtil.windowNameOrFallback(ui,
+                namespace);
         VaadinSession session = ui.getSession();
         PortletViewContext context;
 
@@ -846,17 +838,10 @@ public abstract class VaadinPortlet<C extends Component> extends GenericPortlet
 
         String namespace = response.getPortletResponse().getNamespace();
 
-        String rawWindowName;
-        String windowName;
         UI ui = UI.getCurrent();
-        if (ui != null && ui.getInternals().getExtendedClientDetails() != null) {
-            rawWindowName = ui.getInternals().getExtendedClientDetails()
-                    .getWindowName();
-            windowName = VaadinPortletUtil.normalizeWindowName(rawWindowName);
-        } else {
-            rawWindowName = null;
-            windowName = namespace;
-        }
+        String rawWindowName = VaadinPortletUtil.rawWindowName(ui);
+        String windowName = VaadinPortletUtil.windowNameOrFallback(ui,
+                namespace);
 
         PortletViewContext existing;
         try {

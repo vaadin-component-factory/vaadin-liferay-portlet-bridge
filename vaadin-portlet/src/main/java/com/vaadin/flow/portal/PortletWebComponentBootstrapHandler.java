@@ -135,7 +135,35 @@ class PortletWebComponentBootstrapHandler
                         + "window.Vaadin.Flow.Portlets['%s'].appId='%s';",
                 portletNs, portletNs, portletNs, appId));
 
+        prependWindowNameScript(head);
+
         super.writeBootstrapPage(contentType, response, head, serviceUrl);
+    }
+
+    /**
+     * Makes sure the browsing context has a name, since that name is what
+     * distinguishes one browser tab from another.
+     * <p>
+     * The portlet view is an exported web component, and Flow identifies a
+     * {@code @PreserveOnRefresh} web component by window name, tag and element
+     * id. Without a window name every tab of a session computes the same
+     * identity, so opening a portlet page in a second tab hands that tab the
+     * component instance -- and thus the state -- of the first one. The
+     * embedded bootstrap does not assign a name on its own; only the
+     * client-side router bootstrap does, and portlets never go through it.
+     * <p>
+     * The script is prepended so that it is injected into the embedding page
+     * ahead of the Flow bootstrap script: the parent handler recreates the
+     * head children in document order, which is also their execution order.
+     * An existing name is never overwritten, as it may have been chosen
+     * deliberately, e.g. by {@code window.open(url, name)}.
+     */
+    private void prependWindowNameScript(Element head) {
+        Element script = new Element("script");
+        script.attr("type", "text/javascript");
+        script.appendText(
+                "if (!window.name) { window.name = 'v-' + Math.random(); }");
+        head.prependChild(script);
     }
 
     private String getStaticResourcesMappingURI(
