@@ -546,6 +546,20 @@ public class VaadinPortletTest {
     }
 
     @Test
+    public void initComponent_noCurrentPortletRequest_modeAndStateFallBackToDefaults() {
+        // A preserved component can be reattached with no portlet request in
+        // scope; that must not fail the attach.
+        CurrentInstance.set(VaadinRequest.class, null);
+
+        VaadinPortlet.initComponent(component);
+
+        Assertions.assertEquals(PortletMode.VIEW,
+                component.context.getPortletMode());
+        Assertions.assertEquals(WindowState.NORMAL,
+                component.context.getWindowState());
+    }
+
+    @Test
     public void initComponent_clientReportsNoWindowName_viewContextIsKeyedByNamespace() {
         ExtendedClientDetails noWindowName = Mockito
                 .mock(ExtendedClientDetails.class);

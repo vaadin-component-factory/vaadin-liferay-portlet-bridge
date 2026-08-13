@@ -778,12 +778,17 @@ public abstract class VaadinPortlet<C extends Component> extends GenericPortlet
 
         // Use the mode/state from the render phase if available, since
         // Liferay resource requests don't carry the correct portlet mode.
+        // A preserved component can also be reattached outside of a portlet
+        // request, in which case the defaults stand in, as in
+        // preRegisterViewContext.
         PortletMode mode = portlet.pendingRenderModes.containsKey(namespace)
                 ? portlet.pendingRenderModes.remove(namespace)
-                : request.getPortletMode();
+                : (request != null ? request.getPortletMode()
+                        : PortletMode.VIEW);
         WindowState state = portlet.pendingRenderStates.containsKey(namespace)
                 ? portlet.pendingRenderStates.remove(namespace)
-                : request.getWindowState();
+                : (request != null ? request.getWindowState()
+                        : WindowState.NORMAL);
 
         boolean needViewInit = false;
         if (context == null || context.getView() != component) {
