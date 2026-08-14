@@ -756,19 +756,25 @@ public abstract class VaadinPortlet<C extends Component> extends GenericPortlet
                 "Unable to initialize component, UI instance not available from "
                         + component.getClass().getName()));
 
-        final String namespace = VaadinPortletResponse.getCurrentPortletResponse()
-                .getNamespace();
-        final String rawWindowName;
-        final String windowName;
-        if (ui.getInternals().getExtendedClientDetails() != null) {
-            rawWindowName = ui.getInternals().getExtendedClientDetails().getWindowName();
-            windowName = VaadinPortletUtil.normalizeWindowName(rawWindowName);
-        } else {
-            // Without @PreserveOnRefresh, extended client details may not
-            // be available yet. Use the namespace as a stable fallback.
-            rawWindowName = null;
-            windowName = namespace;
+        // A preserved component is reattached on every render, but an attach
+        // can also happen with no portlet request in scope, e.g. when the
+        // component is moved between UIs programmatically. There is no
+        // namespace to key the view context on then, so leave the existing one
+        // alone rather than fail the attach -- as preRegisterViewContext does.
+        final PortletResponse portletResponse = VaadinPortletResponse
+                .getCurrentPortletResponse();
+        if (portletResponse == null) {
+            LoggerFactory.getLogger(VaadinPortlet.class).debug(
+                    "initComponent: no portlet response in scope, skipping "
+                            + "view context initialization for {}",
+                    component.getClass().getName());
+            return;
         }
+
+        final String namespace = portletResponse.getNamespace();
+        final String rawWindowName = VaadinPortletUtil.rawWindowName(ui);
+        final String windowName = VaadinPortletUtil.windowNameOrFallback(ui,
+                namespace);
         VaadinSession session = ui.getSession();
         PortletViewContext context;
 
@@ -786,12 +792,17 @@ public abstract class VaadinPortlet<C extends Component> extends GenericPortlet
 
         // Use the mode/state from the render phase if available, since
         // Liferay resource requests don't carry the correct portlet mode.
+        // A preserved component can also be reattached outside of a portlet
+        // request, in which case the defaults stand in, as in
+        // preRegisterViewContext.
         PortletMode mode = portlet.pendingRenderModes.containsKey(namespace)
                 ? portlet.pendingRenderModes.remove(namespace)
-                : request.getPortletMode();
+                : (request != null ? request.getPortletMode()
+                        : PortletMode.VIEW);
         WindowState state = portlet.pendingRenderStates.containsKey(namespace)
                 ? portlet.pendingRenderStates.remove(namespace)
-                : request.getWindowState();
+                : (request != null ? request.getWindowState()
+                        : WindowState.NORMAL);
 
         boolean needViewInit = false;
         if (context == null || context.getView() != component) {
@@ -846,17 +857,10 @@ public abstract class VaadinPortlet<C extends Component> extends GenericPortlet
 
         String namespace = response.getPortletResponse().getNamespace();
 
-        String rawWindowName;
-        String windowName;
         UI ui = UI.getCurrent();
-        if (ui != null && ui.getInternals().getExtendedClientDetails() != null) {
-            rawWindowName = ui.getInternals().getExtendedClientDetails()
-                    .getWindowName();
-            windowName = VaadinPortletUtil.normalizeWindowName(rawWindowName);
-        } else {
-            rawWindowName = null;
-            windowName = namespace;
-        }
+        String rawWindowName = VaadinPortletUtil.rawWindowName(ui);
+        String windowName = VaadinPortletUtil.windowNameOrFallback(ui,
+                namespace);
 
         PortletViewContext existing;
         try {

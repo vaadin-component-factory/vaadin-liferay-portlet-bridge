@@ -545,6 +545,53 @@ public class VaadinPortletTest {
         Assertions.assertEquals(component.context, context);
     }
 
+    @Test
+    public void initComponent_noCurrentPortletResponse_attachDoesNotFail() {
+        // Without a response there is no namespace, so the view context
+        // cannot be keyed; the attach must still go through.
+        CurrentInstance.set(VaadinResponse.class, null);
+        CurrentInstance.set(VaadinRequest.class, null);
+
+        Assertions.assertDoesNotThrow(
+                () -> VaadinPortlet.initComponent(component));
+    }
+
+    @Test
+    public void initComponent_noCurrentPortletRequest_modeAndStateFallBackToDefaults() {
+        // A preserved component can be reattached with no portlet request in
+        // scope; that must not fail the attach.
+        CurrentInstance.set(VaadinRequest.class, null);
+
+        VaadinPortlet.initComponent(component);
+
+        Assertions.assertEquals(PortletMode.VIEW,
+                component.context.getPortletMode());
+        Assertions.assertEquals(WindowState.NORMAL,
+                component.context.getWindowState());
+    }
+
+    @Test
+    public void initComponent_clientReportsNoWindowName_viewContextIsKeyedByNamespace() {
+        ExtendedClientDetails noWindowName = Mockito
+                .mock(ExtendedClientDetails.class);
+        Mockito.when(noWindowName.getWindowName()).thenReturn(null);
+        ui.getInternals().setExtendedClientDetails(noWindowName);
+
+        VaadinPortlet.initComponent(component);
+
+        Assertions.assertNull(
+                session.getAttribute(
+                        TestVaadinPortlet.class.getName() + "--viewContext"),
+                "A blank window name is shared by every browser tab and must "
+                        + "not be used as a key");
+
+        Map<String, Object> map = (Map<String, Object>) session.getAttribute(
+                TestVaadinPortlet.class.getName() + "-" + namespace
+                        + "-viewContext");
+        Assertions.assertNotNull(map);
+        Assertions.assertTrue(map.containsKey(namespace));
+    }
+
     private String getListenerUid() {
         ui.getInternals().getStateTree().runExecutionsBeforeClientResponse();
 

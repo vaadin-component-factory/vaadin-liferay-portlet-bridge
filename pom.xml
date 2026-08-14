@@ -84,7 +84,7 @@
         <jetty.version>12.0.16</jetty.version>
         <jakarta.validation.version>3.0.0</jakarta.validation.version>
         <webdrivermanager.version>5.2.3</webdrivermanager.version>
-        <vaadin-liferay-portlet-bridge.version>4.0.0-beta2</vaadin-liferay-portlet-bridge.version>
+        <vaadin-liferay-portlet-bridge.version>4.0.0-beta3</vaadin-liferay-portlet-bridge.version>
 
         <liferay.kernel.version>178.0.1</liferay.kernel.version>
         <deltaspike.version>1.8.1</deltaspike.version>
